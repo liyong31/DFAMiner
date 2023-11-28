@@ -253,6 +253,7 @@ def create_BFStree_cnf(edges, parents, t_aux, m_aux, n, alphabet):
 
     ij_pairs = [ (i, j) for j in range(n-1) for i in range(n-1)]
     ij_pairs = list(filter(lambda x: x[0] < x[1], ij_pairs))
+    # (6)
     # p_{j,i} /\ p_{j+1, i} /\ m_{i,h,j} => !m_{i,k,j+1}
     # if i is parent of both j and j + 1, and in the BFS-tree, we have i ->j over h,
     # then there is no smaller letter k from i to j+1?
@@ -295,7 +296,8 @@ def construct_dfa_from_model(model, edges, n, alphabet):
     return dfa
     
 def solve(
-    n
+    sat
+    , n
     , alphabet
     , init_state
     , graph
@@ -304,8 +306,10 @@ def solve(
     
     nodes, edges, parents, t_aux, m_aux = create_variables(n, alphabet, graph)
     # solvers, Glucose3(), Cadical103(), Cadical153(), Gluecard4(), Glucose42()
-    g = Cadical153() #Lingeling() #Glucose3()
-
+    #g = Cadical153() #Lingeling() #Glucose42()
+    #g = Glucose42()
+    g = Solver(name=sat)
+    
     clauses = create_cnf(nodes, edges, parents, t_aux, m_aux, init_state, n, alphabet, graph, pos, negs)
     print("#Vars: " + str(len(nodes) + len(edges) + len(parents) + len(t_aux) + len(m_aux)))
     print("#Clauses: " + str(len(clauses)))
@@ -331,7 +335,7 @@ def solve(
                 
      
 
-def main(infa, outfa):
+def main(infa, outfa, sat):
     dag, init_state, acc, rej, num_colors = read_input_fa(infa)
     
     alphabet = list(range(num_colors))
@@ -339,14 +343,19 @@ def main(infa, outfa):
     while True:
         print("Iteration " + str(n))
         print("DAG size: " + str(len(dag)))
-        res, dfa = solve(n, alphabet, init_state, dag, acc, rej)
+        res, dfa = solve(sat, n, alphabet, init_state, dag, acc, rej)
         if res:
             print("Output to " + outfa)
             write_dot(dfa, outfa)
             break
         else:
             n += 1
-    
+
+solver_choices = {"cadical103", "cadical153"
+                  , "gluecard4", "glucose4", "glucose42"
+                  , "lingeling", "maplechrono"
+                  , "mergesat3", "minisat22"}
+
 if __name__ == '__main__':
     import argparse
 
@@ -355,5 +364,8 @@ if __name__ == '__main__':
                         help='path to input FA')
     parser.add_argument('--outfile', metavar='path', required=True,
                         help='path to output FA')
+    parser.add_argument('--solver', type=str.lower, required=False,
+                        choices=solver_choices, default="cadical153",
+                        help='choose the SAT solver')
     args = parser.parse_args()
-    main(infa=args.infile, outfa=args.outfile)
+    main(infa=args.infile, outfa=args.outfile, sat=args.solver)
