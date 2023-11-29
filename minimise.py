@@ -349,12 +349,14 @@ def solve(
         return (False, None)
 
 
-def main(infa, outfa, sat):
+def main(infa, outfa, sat, lbound):
     dag, init_state, acc, rej, num_colors = read_input_fa(infa)
 
     alphabet = list(range(num_colors))
-    n = 1
-    while True:
+    n = lbound
+    # the maximal number of states must not be bigger than
+    # the number of states in the input FA
+    while n <= len(dag):
         print("Iteration " + str(n))
         print("DAG size: " + str(len(dag)))
         res, dfa = solve(sat, n, alphabet, init_state, dag, acc, rej)
@@ -381,5 +383,8 @@ if __name__ == '__main__':
     parser.add_argument('--solver', type=str.lower, required=False,
                         choices=solver_choices, default="cadical153",
                         help='choose the SAT solver')
+    parser.add_argument('--lower', type=int, required=False,
+                        default=1,
+                        help='the lower bound for the DFA')
     args = parser.parse_args()
-    main(infa=args.infile, outfa=args.outfile, sat=args.solver)
+    main(infa=args.infile, outfa=args.outfile, sat=args.solver, lbound=args.lower)
