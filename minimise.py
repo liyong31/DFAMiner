@@ -279,12 +279,77 @@ def create_BFStree_cnf(edges, parents, t_aux, m_aux, n, alphabet):
 
     return clauses
 
+# here we define the DSA constraints
+# DSA with n-1 safe states and 1 rejecting sink
+# 1. for all odd letter a, it follows that Tr(0, a) = q then q not 0 and not sink
+# 2. for all even letter a, it follows that Tr(0, a) = 0; Tr(i, a) = n implies i = n and Tr(i, a) = 0 implies i = 0
+# 3. if the maximal number is even, say h, i < n (not sink) implies Tr(i, h) = 0
+# 4. Tr(0, 1) = 1
+def create_DSA_cnf(edges, n, alphabet):
 
-def create_cnf(nodes, edges, parents, t_aux, m_aux, init_state, n, alphabet, graph, pos, negs):
+    print("add constraints for safety automaton")
+    max_letter = max (alphabet)
+    clauses = []
+    is_max_even = max_letter % 2 == 0 
+    if is_max_even:   
+        #A first set sink to be n-1
+        clauses += [[-edges[n-1, -1, -1]]] 
+        #B other states will be accepting
+        clauses += [ [edges[s, -1, -1]] for s in range(0, n-1)]
+    else:
+        # highest color is odd, we construct reachability DFA
+        #A first set sink accepting to be n-1
+        clauses += [[edges[n-1, -1, -1]]] 
+        #B other states will be rejecting
+        clauses += [ [-edges[s, -1, -1]] for s in range(0, n-1)]
+
+    #C. sink only has self-loops
+    clauses += [ [edges[n-1, a, n-1]] for a in alphabet]
+    # more specific to DSA for parity games 
+    #4. 0 goes o 1 over 1
+    if len(alphabet) > 1 and n > 1 and is_max_even:
+            clauses += [[edges[0, 1, 1]]]
+            
+    
+    #1. this should be true
+    odd_letters = [ num for num in alphabet if num % 2 != 0]
+    even_letters = [ num for num in alphabet if num % 2 == 0]
+
+    # if maximam color is odd, swap
+    if not is_max_even:
+        temp = odd_letters
+        odd_letters = even_letters
+        even_letters = temp
+    
+    clauses += [[-edges[0, ol, 0]] for ol in odd_letters]
+    clauses += [[-edges[0, ol, n-1]] for ol in odd_letters]
+
+    
+    #2. even letter a, we have Tr(0, a, 0) = true
+    clauses += [[edges[0, el, 0]] for el in even_letters]
+    #2.A i \neq n implies Tr(i, a, n) = false
+    s_even = [ (s, el) for s in range(0, n-1) for el in even_letters]
+    clauses += [ [-edges[s, el, n-1]] for (s, el) in s_even]
+    #2.B i not 0 implies Tr(i, a, 0) = false
+    #snot0_even = [ (s, el) for s in range(1, n) for el in even_letters]
+    #clauses += [ [-edges[s, el, 0]] for (s, el) in snot0_even]
+
+    #3. reset: highest color goes back to 0
+    clauses += [ [edges[s, max_letter, 0]] for s in range(0, n-1)]
+    
+    return clauses
+
+
+def create_cnf(nodes, edges, parents, t_aux, m_aux, init_state
+               , n, alphabet, graph, safety, pos, negs):
     clauses = create_dfa_cnf(nodes, edges, init_state,
                              n, alphabet, graph, pos, negs)
-    sub_clauses = create_BFStree_cnf(edges, parents, t_aux, m_aux, n, alphabet)
+    sub_clauses = []#create_BFStree_cnf(edges, parents, t_aux, m_aux, n, alphabet)
     clauses = sub_clauses + clauses
+    if safety:
+        sub_clauses = create_DSA_cnf(edges, n, alphabet)
+        clauses = sub_clauses + clauses
+
     for cls in clauses:
         print(cls)
     return clauses
@@ -315,7 +380,7 @@ def construct_dfa_from_model(model, edges, n, alphabet):
 
 
 def solve(
-        sat, n, alphabet, init_state, graph, pos, negs):
+        sat, n, alphabet, init_state, graph, safety, pos, negs):
 
     nodes, edges, parents, t_aux, m_aux = create_variables(n, alphabet, graph)
     # solvers, Glucose3(), Cadical103(), Cadical153(), Gluecard4(), Glucose42()
@@ -324,7 +389,7 @@ def solve(
     g = Solver(name=sat)
 
     clauses = create_cnf(nodes, edges, parents, t_aux, m_aux,
-                         init_state, n, alphabet, graph, pos, negs)
+                         init_state, n, alphabet, graph, safety, pos, negs)
     print("#Vars: " + str(len(nodes) + len(edges) +
           len(parents) + len(t_aux) + len(m_aux)))
     print("#Clauses: " + str(len(clauses)))
@@ -349,7 +414,7 @@ def solve(
         return (False, None)
 
 
-def main(infa, outfa, sat, lbound):
+def main(infa, outfa, sat, lbound, safety):
     dag, init_state, acc, rej, num_colors = read_input_fa(infa)
 
     alphabet = list(range(num_colors))
@@ -359,7 +424,7 @@ def main(infa, outfa, sat, lbound):
     while n <= len(dag):
         print("Iteration " + str(n))
         print("DAG size: " + str(len(dag)))
-        res, dfa = solve(sat, n, alphabet, init_state, dag, acc, rej)
+        res, dfa = solve(sat, n, alphabet, init_state, dag, safety, acc, rej)
         if res:
             print("Output to " + outfa)
             write_dot(dfa, outfa)
@@ -386,5 +451,8 @@ if __name__ == '__main__':
     parser.add_argument('--lower', type=int, required=False,
                         default=1,
                         help='the lower bound for the DFA')
+    parser.add_argument('--safety', action="store_true", required=False,
+                        default=False,
+                        help='construct safety DFA for solving parity games')
     args = parser.parse_args()
-    main(infa=args.infile, outfa=args.outfile, sat=args.solver, lbound=args.lower)
+    main(infa=args.infile, outfa=args.outfile, sat=args.solver, lbound=args.lower, safety=args.safety)
