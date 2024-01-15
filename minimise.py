@@ -180,7 +180,7 @@ def create_dfa_cnf(nodes, edges, init_state, n, alphabet, graph, pos, negs):
 # for DFA Identification"
 
 
-def create_BFStree_cnf(edges, parents, t_aux, m_aux, n, alphabet):
+def create_BFStree_cnf(edges, parents, t_aux, m_aux, n, alphabet, safety):
 
     clauses = []
     # C. node BFS-tree constraints
@@ -257,16 +257,21 @@ def create_BFStree_cnf(edges, parents, t_aux, m_aux, n, alphabet):
 
     clauses = sub_cluases + clauses
 
+    max_state = -1
+    if safety: 
+        max_state = n - 2 
+    else: 
+        max_state = n - 1
     # 4. BFS tree parent-child relation
     ijk_pairs = [(k, i, j) for k in range(n-1)
-                 for i in range(n-1) for j in range(n-1)]
+                 for i in range(n-1) for j in range(max_state)]
     ijk_pairs = list(filter(lambda x: x[0] < x[1] and x[1] < x[2], ijk_pairs))
     # p_{j, i} => !p_{j+1, k}, it means that i is parent of j, then k is not possible to be the parent of j + 1
     # since k is even smaller than i
     edge_rel = [[0 - parents[j, i], 0-parents[j+1, k]]
                 for (k, i, j) in ijk_pairs]
 
-    ij_pairs = [(i, j) for j in range(n-1) for i in range(n-1)]
+    ij_pairs = [(i, j) for j in range(max_state) for i in range(n-1)]
     ij_pairs = list(filter(lambda x: x[0] < x[1], ij_pairs))
     # (6)
     # p_{j,i} /\ p_{j+1, i} /\ m_{i,h,j} => !m_{i,k,j+1}
@@ -344,7 +349,7 @@ def create_cnf(nodes, edges, parents, t_aux, m_aux, init_state
                , n, alphabet, graph, safety, pos, negs):
     clauses = create_dfa_cnf(nodes, edges, init_state,
                              n, alphabet, graph, pos, negs)
-    sub_clauses = []#create_BFStree_cnf(edges, parents, t_aux, m_aux, n, alphabet)
+    sub_clauses = create_BFStree_cnf(edges, parents, t_aux, m_aux, n, alphabet, safety)
     clauses = sub_clauses + clauses
     if safety:
         sub_clauses = create_DSA_cnf(edges, n, alphabet)
