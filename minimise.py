@@ -341,6 +341,15 @@ def create_DSA_cnf(edges, n, alphabet):
 
     #3. reset: highest color goes back to 0
     clauses += [ [edges[s, max_letter, 0]] for s in range(0, n-1)]
+
+    #4. loop condition: no state but the sink can loop over
+    # a colour of an opponent parity as the highest one
+    clauses += [ [-edges[s, ol, s]] for s in range(0, n-1) for ol in odd_letters]
+
+    #5. progress-n: whenever a state reads a colour of the same parity as the 
+    # highest one, it cannot reach the sink
+    clauses += [ [-edges[s, el, n-1]] for s in range(0, n-1) for el in even_letters]
+
     
     return clauses
 
