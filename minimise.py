@@ -25,6 +25,8 @@ def read_input_fa(name):
                 break
             for line in lines:
                 line_brk = line.split()
+                if len(line_brk) == 0:
+                    continue
                 if num_line == 0:
                     num_states = int(line_brk[0])
                     num_colors = int(line_brk[1])
