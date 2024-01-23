@@ -3,6 +3,8 @@ from pysat.formula import CNF
 from pysat.solvers import Solver
 
 import itertools
+import sys
+
 
 from dfa import DFA, dict2dfa
 from dfa.draw import write_dot
@@ -13,10 +15,12 @@ def read_input_fa(name):
     num_line = 0
     num_states = -1
     num_colors = -1
-    init_state = -1
     dag = []
     acc = set()
     rej = set()
+    inits = set()
+    left = set()
+    right = set()
     with open(name) as infile:
         # open this file
         while True:
@@ -34,9 +38,15 @@ def read_input_fa(name):
                     # print("#C = " + str(num_colors))
                     dag = [dict() for i in range(num_states)]
                     num_line += 1
-                elif num_line == 1:
+                elif num_line == 1 and line[0] != 'i':
+                    # old format
                     init_state = int(line_brk[0])
+                    inits.add(init_state)
+                    num_line += 1
+                elif line[0] == 'i':
+                    init_state = int(line_brk[1])
                     # print("init = " + str(init_state))
+                    inits.add(init_state)
                     num_line += 1
                 elif line[0] == 'a':
                     state = int(line_brk[1])
@@ -51,10 +61,15 @@ def read_input_fa(name):
                     src_state = int(line_brk[1])
                     letter = int(line_brk[2])
                     dst_state = int(line_brk[3])
+                    right.add(dst_state)
+                    left.add(src_state)
                     # print("src = " + str(src_state) + " letter = " +
                         #   str(letter) + " dst = " + str(dst_state))
                     dag[src_state][letter] = dst_state
-    return (dag, init_state, acc, rej, num_colors)
+    result = left - right
+    print(result)
+    #sys.exit(1)
+    return (dag, inits, acc, rej, num_colors)
 
 # now we have trees, it is time to create numbers
 # 0 <= i < j <= n-1
@@ -144,9 +159,9 @@ def create_dfa_cnf(nodes, edges, init_state, n, alphabet, graph, pos, negs):
     clauses = sub_clauses + clauses
 
     # B. consistent with samples
-    # B.1. first ensure that the initial state is empty word
-    clauses += [[nodes[init_state, 0]]]
-    clauses += [[0-nodes[init_state, i]] for i in range(1, n)]
+    # B.1. first ensure that initial states are empty word
+    clauses += [[nodes[init, 0]] for init in init_state]
+    clauses += [[0-nodes[init, i]] for i in range(1, n) for init in init_state]
     # B.2. setup final states
     # final_node = search_vertex(graph, init_state, pos[0])
     # print("final node: " + str(final_node))
@@ -173,6 +188,21 @@ def create_dfa_cnf(nodes, edges, init_state, n, alphabet, graph, pos, negs):
     # sub_clauses += [[0-nodes[nr, p], edges[p, letter, q], 0-nodes[dr[letter], q]]
     #               for (nr, dr, letter) in prs for p in range(n) for q in range(n)]
     clauses = sub_clauses + clauses
+
+    #EXT. if they are two separate DFAs, we can just add
+    # (s, p) and (t, p) cannot hold at the same time for final s and reject t
+    # if they can reach the same states, then they must be not final and not reject
+    # if len(init_state) == 2:
+    #     max_init = max(init_state)
+    #     max_state = max([ dr[letter] for (_, dr, letter) in prs])
+    #     # s is final and t is reject, cannot reach the same state in DFA
+    sub_clauses = [ [ -nodes[s, p], -nodes[t, p]] 
+          for s in pos # not accept
+          for t in negs
+          for p in range(0, n)] # the first posDFA
+
+    clauses = sub_clauses + clauses
+        
 
     return clauses
 
