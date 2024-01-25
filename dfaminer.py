@@ -33,16 +33,16 @@ class dfa_miner:
             # print("label: = " + str( res == strunion.word_type.ACCEPT))
             if res != strunion.word_type.ACCEPT:
                 print("ERROR classification: ", p, " Sample value: ", True)
-                return (False, p)
+                sys.exit(-1)
         for p in self.negative_samples:
             # print("word: = " + str(p))
             res = dfa.run(init, p)
             # print("label: = " + str( res == strunion.word_type.ACCEPT))
             if res == strunion.word_type.ACCEPT:
                 print("ERROR classification: ", p, " Sample value: ", False)
-                return (False, p)
+                sys.exit(-1)
         
-        return (True, [])
+        print("DFA verification passed")
 
     def get_word(self, line_brk):
         # print("break lines: ", list(line_brk), " #", len(line_brk))
