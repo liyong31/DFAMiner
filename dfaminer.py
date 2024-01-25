@@ -4,6 +4,7 @@ import minimiser
 
 from functools import cmp_to_key
 import sys
+import time
 
 
 
@@ -87,9 +88,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Infer minimal DFA consistent with samples')
     parser.add_argument('--file', metavar='path', required=True,
-                        help='path to input FA')
+                        help='path to input sample file')
     parser.add_argument('--out', metavar='path', required=True,
-                        help='path to output FA')
+                        help='path to output DFA')
     parser.add_argument('--solver', type=str.lower, required=False,
                         choices=minimiser.solver_choices, default="cadical153",
                         help='choose the SAT solver')
@@ -112,6 +113,8 @@ if __name__ == '__main__':
                         default=False,
                         help='verify resultant DFA')
     args = parser.parse_args()
+    
+    start_time = time.time()
     miner = dfa_miner()
     miner.read_samples(args.file)
     print("Input alphabet size: ", miner.num_letters)
@@ -159,3 +162,6 @@ if __name__ == '__main__':
     print("Output to " + args.out)
     with open(args.out, "w") as file:
         file.write(result_dfa.dot())
+    end_time = time.time()
+    elapsed_time = round(end_time - start_time, 4)
+    print(f"Elapsed time in miner: {elapsed_time} secs")
