@@ -39,3 +39,29 @@ options:
  
 For more SAT solvers, see [PySAT toolkit](https://github.com/pysathq/pysat).
 
+#### Input format
+
+dfaminer.py accepts a file in [Abbadingo format](https://abbadingo.cs.nuim.ie/).
+An example file is given below:
+```
+8 2
+1 3 0 0 0
+1 3 0 0 1
+0 3 0 1 0
+0 3 0 1 1
+1 3 1 0 0
+0 3 1 0 1
+0 3 1 1 0
+0 3 1 1 1
+```
+The first line gives the number of samples and the size of the alphabet.
+Each line after that will first specify the membership of the word, the length of the word and the word sequence.
+Here `1` means accept, `0` reject and `-1` don't care.
+
+#### Minimiser
+One can also use minimiser.py as a standalone tool to minimise DFAs with don't care words.
+An example input file is `data2-3-all-dfa.txt`.
+
+#### License
+TBA
+
