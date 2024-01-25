@@ -13,10 +13,10 @@ TODO
 
 ## Usage
 
-For usage, type <b>`python3 dfaminer --help`</b>.
+For usage, type <b>`python3 dfaminer.py --help`</b>.
 
 ```
-sage: dfaminer.py [-h] --file path --out path [--solver {glucose4,minisat22,maplechrono,mergesat3,gluecard4,lingeling,cadical153,cadical103,glucose42}] [--lower LOWER] [--upper UPPER] [--sdfa]
+Usage: dfaminer.py [-h] --file path --out path [--solver {glucose4,minisat22,maplechrono,mergesat3,gluecard4,lingeling,cadical153,cadical103,glucose42}] [--lower LOWER] [--upper UPPER] [--sdfa]
                    [--nobfs] [--safety] [--verify]
 
 Infer minimal DFA consistent with samples
@@ -62,6 +62,9 @@ Here `1` means accept, `0` reject and `-1` don't care.
 One can also use minimiser.py as a standalone tool to minimise DFAs with don't care words.
 An example input file is `data2-3-all-dfa.txt`.
 
+The format is quite straight-forward. 
+The first line gives the number of states and the size of the alphabet.
+For each line, `i` is followed by an initial state, `a` by a final state, `r` by a reject state, and `t` by a transition (source, letter, destination)
+
 #### License
 TBA
-
