@@ -1,5 +1,5 @@
 # DFAMiner
-A python tool for inferring minimal DFA from samples.
+A python tool for mining a minimal DFA from a given set of labelled samples.
 
 
 ## Requirements 

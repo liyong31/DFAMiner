@@ -84,7 +84,7 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser(
-        description='Infer minimal DFA consistent with samples')
+        description='Mining a minimal DFA consistent with samples')
     parser.add_argument('--file', metavar='path', required=True,
                         help='path to input sample file')
     parser.add_argument('--out', metavar='path', required=True,
