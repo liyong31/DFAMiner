@@ -75,11 +75,9 @@ class dfa_miner:
                         self.negative_samples.append(w)
                 line_idx += 1
 
-        # now sort them
-        self.positve_samples = sorted(self.positve_samples
-                                      , key=cmp_to_key(strunion.dfa_builder.LEXICOGRAPHIC_ORDER))
-        self.negative_samples = sorted(self.negative_samples
-                                      , key=cmp_to_key(strunion.dfa_builder.LEXICOGRAPHIC_ORDER))
+        # now sort them in place
+        self.positve_samples.sort(key=cmp_to_key(strunion.dfa_builder.LEXICOGRAPHIC_ORDER))
+        self.negative_samples.sort(key=cmp_to_key(strunion.dfa_builder.LEXICOGRAPHIC_ORDER))
 
 # sorted(data, key=cmp_to_key(custom_comparator))
 if __name__ == '__main__':
@@ -125,8 +123,8 @@ if __name__ == '__main__':
         samples = [ (sample, True) for sample in miner.positve_samples]
         samples.extend([(sample, False) for sample in miner.negative_samples])
         WORD_ORDER = lambda s1, s2: strunion.dfa_builder.LEXICOGRAPHIC_ORDER(s1[0], s2[0])
-        # now we sort them
-        samples = sorted(samples, key=cmp_to_key(WORD_ORDER))
+        # now we sort them in place
+        samples.sort(key=cmp_to_key(WORD_ORDER))
         builder = strunion.dfa_builder()
         for sample in samples:
             builder.add(sample[0], strunion.word_type.ACCEPT 
