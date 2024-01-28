@@ -46,13 +46,13 @@ class sdfa_poly_minimizer:
             # add this partition as splitter?
             split_block_id = self.splitter_ids.pop(0)
             split_block = self.partition_queue[split_block_id]
-            self.__refine_partition(split_block, split_block_id)
+            self.__refine_partition(split_block)
         
         # Step 4: Build the minimized DFA
         return self.__build_minimized_dfa()
 
     # algorithm from https://en.wikipedia.org/wiki/DFA_minimization
-    def __refine_partition(self, split_block, split_block_id):
+    def __refine_partition(self, split_block):
         symbols = set()
         
         # used symbols
