@@ -1,4 +1,5 @@
 import strunion
+import copy
 
 # separated DFA for the positive and negative samples
 class sdfa:
@@ -9,6 +10,7 @@ class sdfa:
         self.trans = []
         self.final_states = set()
         self.reject_states = set()
+        self.rev_trans = None
         
     def add_initial_state(self, state):
         self.init_states.add(state)
@@ -83,6 +85,88 @@ class sdfa:
                 res.add_transition(src + base, c, dst + base)
         
         return res
+    
+    def split(self):
+        pos_dfa = sdfa()
+        neg_dfa = sdfa()
+        
+        pos_dfa.set_num_letters(self.num_letters)
+        neg_dfa.set_num_letters(self.num_letters)
+        pos_dfa.set_num_states(self.num_states)
+        neg_dfa.set_num_states(self.num_states)
+        
+        pos_dfa.init_states = self.init_states.copy()
+        neg_dfa.init_states = self.init_states.copy()
+        pos_dfa.final_states = self.final_states.copy()
+        neg_dfa.final_states = self.reject_states.copy()
+        
+        pos_dfa.trans = copy.deepcopy(self.trans)
+        neg_dfa.trans = copy.deepcopy(self.trans)
+        
+        return (pos_dfa, neg_dfa)
+        
+    def get_reachable_states(self):
+        return self.__get_reachable_states(self.init_states, self.trans)
+    
+    def __get_reachable_states(self, inits, trans):
+        reachable_states = set()
+        reachable_states |= inits
+        curr_set = set()
+        curr_set |= inits
+        while True:
+            temp_set = set()
+            for state in curr_set:
+                for _, (key, next_state) in enumerate(trans[state].items()):
+                    if isinstance(next_state, set): 
+                        temp_set |= next_state
+                    else:
+                        temp_set.add(next_state)
+            # now check newly reachable states
+            temp_set -= reachable_states
+            reachable_states |= temp_set
+            
+            if len(temp_set) == 0:
+                break
+            
+            curr_set = temp_set
+        
+        return reachable_states
+    
+    def compute_reverse_transition(self):
+        if self.rev_trans is None:
+            self.rev_trans = [dict() for _ in range(self.num_states)]
+            # obtain reverse transitions
+            for state, strans in enumerate(self.trans):
+                for _, (letter, next_state) in enumerate(strans.items()):
+                    predecessors = self.rev_trans[next_state].get(letter, set())
+                    predecessors.add(state)
+                    self.rev_trans[next_state][letter] = predecessors
+    
+    def get_rev_rechable_states(self):
+        # reachable from final and reject
+        inits = self.final_states.copy()
+        inits |= self.reject_states
+        self.compute_reverse_transition()
+        return self.__get_reachable_states(inits, self.rev_trans) 
+    
+    def reduce(self):
+        reachable_states = self.get_reachable_states() & self.get_rev_rechable_states()
+        state_map = { state : index for index, state in enumerate(reachable_states)}
+        # print(state_map)
+        result = sdfa()
+        result.set_num_states(len(reachable_states))
+        result.set_num_letters(self.num_letters)
+        result.final_states = { state_map[state] for state in self.final_states & reachable_states}
+        result.reject_states = { state_map[state] for state in self.reject_states & reachable_states }
+        result.init_states = { state_map[state] for state in self.init_states & reachable_states}
+        result.trans = [ dict( ) for i in range(result.num_states)]
+        
+        for state in reachable_states:
+                for _, (letter, next_state) in enumerate(self.trans[state].items()):
+                    if next_state in reachable_states:
+                        result.add_transition(state_map[state], letter, state_map[next_state])
+                        
+        return result
         
     def __str__(self):
         out_str = []
@@ -162,33 +246,33 @@ class sdfa:
                     elif num_line == 1 and line[0] != "i":
                         # old format
                         init_state = int(line_brk[0])
-                        self.init_states.add(init_state)
+                        self.add_initial_state(init_state)
                         num_line += 1
                     elif line[0] == "i":
                         init_state = int(line_brk[1])
                         # print("init = " + str(init_state))
-                        self.init_states.add(init_state)
+                        self.add_initial_state(init_state)
                         num_line += 1
                     elif line[0] == "a":
                         state = int(line_brk[1])
                         # print("acc = " + str(state))
-                        self.final_states.add(state)
+                        self.add_final_state(state)
                     elif line[0] == "r":
                         state = int(line_brk[1])
                         # print("rej = " + str(state))
-                        self.reject_states.add(state)
+                        self.add_reject_state(state)
                     elif line[0] == "t":
                         # now it is after three
                         src_state = int(line_brk[1])
                         letter = int(line_brk[2])
                         dst_state = int(line_brk[3])
-                        right.add(dst_state)
-                        left.add(src_state)
+                        # right.add(dst_state)
+                        # left.add(src_state)
                         # print("src = " + str(src_state) + " letter = " +
                         #   str(letter) + " dst = " + str(dst_state))
-                        self.trans[src_state][letter] = dst_state
-        result = left - right
-        #print(result)
+                        self.add_transition(src_state, letter, dst_state)
+        # result = left - right
+        # print(result)
         # sys.exit(1)
 
 
