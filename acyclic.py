@@ -59,6 +59,7 @@ class sdfa_acyclic_minimiser:
         return hopcroft.sdfa_poly_minimiser.build_minimised_dfa(
             self.sdfa, len(self.states), self.state_map
         )
+        # return self.__build_minimised_sdfa()
 
     def __register_new_state(self, curr_state):
         # 1. get successor information
@@ -85,6 +86,40 @@ class sdfa_acyclic_minimiser:
         else:
             repr_state = len(self.states)
             self.states.append(state)
-            self.state_map[curr_state] = repr_state
+            # self.state_map[curr_state] = repr_state
             self.register[state] = repr_state
         return repr_state
+    
+    def __build_minimised_sdfa(self):
+        result = SDFA.sdfa()
+        result.set_num_states(len(self.states))
+        result.set_num_letters(self.sdfa.num_letters)
+        
+        worklist = [ self.state_map[state] for state in self.sdfa.init_states]
+        already_added = set()
+        for state in worklist:
+            result.add_initial_state(state)
+            already_added.add(state)
+        
+        while len(worklist) > 0:
+            # travserse states one by one
+            curr_state_id = worklist.pop(0)
+            curr_state = self.states[curr_state_id]
+            
+            # acceptance
+            if curr_state.is_final == SU.word_type.ACCEPT:
+                result.add_final_state(curr_state_id)
+            elif curr_state.is_final == SU.word_type.REJECT:
+                result.add_reject_state(curr_state_id)
+            
+            # transitions
+            for letter, dest in zip(curr_state.labels, curr_state.states):
+                dest_state_id = self.register[dest]
+                result.add_transition(curr_state_id, letter, dest_state_id)
+                if dest_state_id in already_added:
+                    continue
+                else:
+                    already_added.add(dest_state_id)
+                    worklist.append(dest_state_id)
+                    
+        return result
