@@ -1,5 +1,6 @@
 import strunion
 import copy
+from hopcroft import sdfa_poly_minimizer
 
 # separated DFA for the positive and negative samples
 class sdfa:
@@ -167,6 +168,10 @@ class sdfa:
                         result.add_transition(state_map[state], letter, state_map[next_state])
                         
         return result
+    
+    def minimize(self):
+        poly_minimiser = sdfa_poly_minimizer(self)
+        return poly_minimiser.minimize()
         
     def __str__(self):
         out_str = []

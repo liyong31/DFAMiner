@@ -49,7 +49,7 @@ class sdfa_poly_minimizer:
             self.__refine_partition(split_block)
         
         # Step 4: Build the minimized DFA
-        return self.__build_minimized_dfa()
+        return sdfa_poly_minimizer.build_minimized_dfa(self.sdfa, len(self.partition_queue), self.state_map)
 
     # algorithm from https://en.wikipedia.org/wiki/DFA_minimization
     def __refine_partition(self, split_block):
@@ -102,23 +102,24 @@ class sdfa_poly_minimizer:
                         
             self.partition_queue = tmp
     
-    def __build_minimized_dfa(self):
+    @staticmethod
+    def build_minimized_dfa(sdfa, num_partitions, state_map):
         result = SDFA.sdfa()
-        result.set_num_states(len(self.partition_queue))
-        result.set_num_letters(self.sdfa.num_letters)
+        result.set_num_states(num_partitions)
+        result.set_num_letters(sdfa.num_letters)
         
-        # acceptance and initials
-        for p_id, partition in enumerate(self.partition_queue):
-            if len(self.sdfa.init_states & partition) > 0:
-                result.add_initial_state(p_id)
-            if len(self.sdfa.final_states & partition) > 0:
-                result.add_final_state(p_id)
-            if len(self.sdfa.reject_states & partition) > 0:
-                result.add_reject_state(p_id)
         # transitions
-        for src, strans in enumerate(self.sdfa.trans):
+        for src, strans in enumerate(sdfa.trans):
             # print(src, strans)
             for _, (c, dst) in enumerate(strans.items()):
-                result.add_transition(self.state_map[src], c, self.state_map[dst])
+                result.add_transition(state_map[src], c, state_map[dst])
+                
+            # acceptance and initials
+            if src in sdfa.init_states:
+                result.add_initial_state(state_map[src])
+            if src in sdfa.final_states:
+                result.add_final_state(state_map[src])
+            if src in sdfa.reject_states:
+                result.add_reject_state(state_map[src])
         
         return result
