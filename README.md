@@ -86,4 +86,4 @@ The first line gives the number of states and the size of the alphabet.
 For each line, `i` is followed by an initial state, `a` by a final state, `r` by a reject state, and `t` by a transition (source, letter, destination)
 
 #### License
-TBA
+See LICENSE.txt
