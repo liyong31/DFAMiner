@@ -2,8 +2,8 @@ import strunion as SU
 import sdfa as SDFA
 import hopcroft
 
-
-class dag_minimiser:
+# minimiser for acylic sdfa
+class sdfa_acyclic_minimiser:
 
     def __init__(self, sdfa):
         self.sdfa = sdfa.reduce()
@@ -16,7 +16,7 @@ class dag_minimiser:
 
     ## minimise deterministic acyclic automata, so we start from leaf states
     def minimise(self):
-        # Step 1. prepare the DAG
+        # Step 1. prepare the DAG/ acyclic structure
         pred_map = {}
         worklist = []
         succ_map = {}
@@ -56,7 +56,7 @@ class dag_minimiser:
                 else:
                     succ_map[pred] = succ_set
 
-        return hopcroft.sdfa_poly_minimizer.build_minimized_dfa(
+        return hopcroft.sdfa_poly_minimiser.build_minimised_dfa(
             self.sdfa, len(self.states), self.state_map
         )
 

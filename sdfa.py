@@ -1,6 +1,7 @@
 import strunion
 import copy
-from hopcroft import sdfa_poly_minimizer
+from hopcroft import sdfa_poly_minimiser
+from acyclic import sdfa_acyclic_minimiser
 
 # separated DFA for the positive and negative samples
 class sdfa:
@@ -169,9 +170,13 @@ class sdfa:
                         
         return result
     
-    def minimize(self):
-        poly_minimiser = sdfa_poly_minimizer(self)
-        return poly_minimiser.minimize()
+    def minimise(self):
+        poly_minimiser = sdfa_poly_minimiser(self)
+        return poly_minimiser.minimise()
+    
+    def minimise_acyclic(self):
+        acyclic_minimiser = sdfa_acyclic_minimiser(self)
+        return acyclic_minimiser.minimise()
         
     def __str__(self):
         out_str = []
