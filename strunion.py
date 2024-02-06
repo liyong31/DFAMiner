@@ -115,7 +115,12 @@ class dfa_builder:
 
         @staticmethod
         def reference_equals(a1, a2):
-            return len(a1) == len(a2) and all(x is y for x, y in zip(a1, a2))
+            if len(a1) != len(a2):
+                return False
+            for x, y in zip(a1, a2):
+                if x is not y:
+                    return False
+            return True
 
     def __init__(self):
         self.register = {} #defaultdict(lambda: None)
