@@ -46,12 +46,14 @@ class word_type(Enum):
         ACCEPT = 2
         
 class dfa_builder:
-    LEXICOGRAPHIC_ORDER = lambda s1, s2: (
-         len(s1) - len(s2)
-    ) if len(s1) != len(s2) else (
-        -1 if s1 < s2 else (1 if s1 > s2 else 0)
-    )
-    
+    # standard lexicographic ordering of strings
+    @staticmethod
+    def LEXICOGRAPHIC_ORDER(s1, s2):
+        for c1, c2 in zip(s1, s2):
+            if c1 != c2:
+                return c1 - c2
+        return len(s1) - len(s2)
+    # lambda s1, s2: -1 if s1 < s2 else (1 if s1 > s2 else 0)
 
 
     class state_t:
@@ -90,7 +92,7 @@ class dfa_builder:
             return hash_val
 
         def new_state(self, label):
-            assert label not in self.labels, f"State already has transition labeled: {label}"
+            assert label not in self.labels, f"State already has transition labeled: " + str(label)
             self.labels.append(label)
             new_state = dfa_builder.state_t()
 
