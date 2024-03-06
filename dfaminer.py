@@ -15,6 +15,8 @@ class dfa_miner:
         self.negative_samples = []
         self.num_samples = 0
         self.num_letters = 0
+        self.has_emptysample= False
+        self.accept_empty = False
     
     # need to check whether the DFA accepts odd word
     # or reject some even word
@@ -67,8 +69,12 @@ class dfa_miner:
                     self.num_samples = int(line_brk[0])
                     self.num_letters = int(line_brk[1])
                 else:
-                    
                     mq, w = self.get_word(line_brk)
+                    # special case for empty sample
+                    if len(w) == 0:
+                        self.has_emptysample = True
+                        self.accept_empty = (mq == 1)
+                        continue
                     if mq == 1:
                         self.positve_samples.append(w)
                     elif mq == 0:
@@ -149,6 +155,14 @@ if __name__ == '__main__':
         
         sdfa = SDFA.sdfa.combine(pos_dfa, neg_dfa, miner.num_letters)
         # print(sdfa.dot())
+        
+    # handle possible empty sample
+    if miner.has_emptysample:
+        func = lambda x: sdfa.add_final_state(x) if miner.accept_empty else sdfa.add_reject_state(x)
+        # initial states would not have incoming edges
+        for init in sdfa.init_states:
+            func(init)
+        
     # now minimise
     min = minimiser.sdfa_minimiser()
     result_dfa = min.minimise(input_sdfa=sdfa, sat=args.solver
