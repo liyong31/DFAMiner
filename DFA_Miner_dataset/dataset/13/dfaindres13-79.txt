@@ -1,0 +1,105 @@
+[+] Successfully built an APTA from file 'res13-79.txt'
+[*] The APTA size: 1799
+[t] APTA buildingtime: 0.02
+[*] Solver has been started.
+= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+[*] Trying to build a DFA with 1 states.
+[t] Formula buildingtime: 0.04
+[*] Vars in CNF: 1802
+[*] Clauses in CNF: 0
+[t] SAT solvingtime: 0.00
+[*] Not found a DFA with 1 states.
+[*] Solver has been restarted.
+= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+[*] Trying to build a DFA with 2 states.
+[t] Formula buildingtime: 0.12
+[*] Vars in CNF: 3610
+[*] Clauses in CNF: 19285
+[t] SAT solvingtime: 0.00
+[*] Not found a DFA with 2 states.
+[*] Solver has been restarted.
+= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+[*] Trying to build a DFA with 3 states.
+[t] Formula buildingtime: 0.17
+[*] Vars in CNF: 5424
+[*] Clauses in CNF: 41525
+[t] SAT solvingtime: 0.01
+[*] Not found a DFA with 3 states.
+[*] Solver has been restarted.
+= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+[*] Trying to build a DFA with 4 states.
+[t] Formula buildingtime: 0.39
+[*] Vars in CNF: 7244
+[*] Clauses in CNF: 72773
+[t] SAT solvingtime: 0.02
+[*] Not found a DFA with 4 states.
+[*] Solver has been restarted.
+= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+[*] Trying to build a DFA with 5 states.
+[t] Formula buildingtime: 0.38
+[*] Vars in CNF: 9070
+[*] Clauses in CNF: 113037
+[t] SAT solvingtime: 0.15
+[*] Not found a DFA with 5 states.
+[*] Solver has been restarted.
+= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+[*] Trying to build a DFA with 6 states.
+[t] Formula buildingtime: 0.74
+[*] Vars in CNF: 10902
+[*] Clauses in CNF: 162325
+[t] SAT solvingtime: 0.45
+[*] Not found a DFA with 6 states.
+[*] Solver has been restarted.
+= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+[*] Trying to build a DFA with 7 states.
+[t] Formula buildingtime: 0.72
+[*] Vars in CNF: 12740
+[*] Clauses in CNF: 220645
+[t] SAT solvingtime: 1.62
+[*] Not found a DFA with 7 states.
+[*] Solver has been restarted.
+= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+[*] Trying to build a DFA with 8 states.
+[t] Formula buildingtime: 0.91
+[*] Vars in CNF: 14584
+[*] Clauses in CNF: 288005
+[t] SAT solvingtime: 5.31
+[*] Not found a DFA with 8 states.
+[*] Solver has been restarted.
+= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+[*] Trying to build a DFA with 9 states.
+[t] Formula buildingtime: 1.19
+[*] Vars in CNF: 16434
+[*] Clauses in CNF: 364413
+[t] SAT solvingtime: 13.27
+[*] Not found a DFA with 9 states.
+[*] Solver has been restarted.
+= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+[*] Trying to build a DFA with 10 states.
+[t] Formula buildingtime: 1.43
+[*] Vars in CNF: 18290
+[*] Clauses in CNF: 449877
+[t] SAT solvingtime: 45.58
+[*] Not found a DFA with 10 states.
+[*] Solver has been restarted.
+= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+[*] Trying to build a DFA with 11 states.
+[t] Formula buildingtime: 1.74
+[*] Vars in CNF: 20152
+[*] Clauses in CNF: 544405
+[t] SAT solvingtime: 131.43
+[*] Not found a DFA with 11 states.
+[*] Solver has been restarted.
+= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+[*] Trying to build a DFA with 12 states.
+[t] Formula buildingtime: 2.13
+[*] Vars in CNF: 22020
+[*] Clauses in CNF: 648005
+[t] SAT solvingtime: 350.85
+[*] Not found a DFA with 12 states.
+[*] Solver has been restarted.
+= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+[*] Trying to build a DFA with 13 states.
+[t] Formula buildingtime: 2.56
+[*] Vars in CNF: 23894
+[*] Clauses in CNF: 760685

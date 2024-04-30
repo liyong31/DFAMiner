@@ -1,0 +1,28 @@
+Input alphabet size:  2
+# of states in positive DFA:  139
+# of states in negative DFA:  110
+Input SDFA size: 249
+Input alphabet size: 2
+Looking for DFA with 1 states...
+adding constraints for BFS tree...
+Created # of vars: 256
+Created # of clauses: 587
+No DFA existing for size 1
+Looking for DFA with 2 states...
+adding constraints for BFS tree...
+Created # of vars: 524
+Created # of clauses: 1998
+No DFA existing for size 2
+Looking for DFA with 3 states...
+adding constraints for BFS tree...
+Created # of vars: 804
+Created # of clauses: 4246
+No DFA existing for size 3
+Looking for DFA with 4 states...
+adding constraints for BFS tree...
+Created # of vars: 1096
+Created # of clauses: 7345
+Found a DFA with size 4
+Elapsed time in minimiser: 0.0191 secs
+Output to res4-56.txt.dot
+Elapsed time in miner: 0.0251 secs

@@ -1,0 +1,21 @@
+Input alphabet size:  2
+Input SDFA size: 204
+Input alphabet size: 2
+Looking for DFA with 1 states...
+adding constraints for BFS tree...
+Created # of vars: 211
+Created # of clauses: 549
+No DFA existing for size 1
+Looking for DFA with 2 states...
+adding constraints for BFS tree...
+Created # of vars: 434
+Created # of clauses: 1816
+No DFA existing for size 2
+Looking for DFA with 3 states...
+adding constraints for BFS tree...
+Created # of vars: 669
+Created # of clauses: 3814
+Found a DFA with size 3
+Elapsed time in minimiser: 0.0083 secs
+Output to res4-62.txt.dot
+Elapsed time in miner: 0.0157 secs

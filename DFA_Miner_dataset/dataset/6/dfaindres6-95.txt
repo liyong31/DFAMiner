@@ -1,0 +1,72 @@
+[+] Successfully built an APTA from file 'res6-95.txt'
+[*] The APTA size: 831
+[t] APTA buildingtime: 0.00
+[*] Solver has been started.
+= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+[*] Trying to build a DFA with 1 states.
+[t] Formula buildingtime: 0.01
+[*] Vars in CNF: 834
+[*] Clauses in CNF: 0
+[t] SAT solvingtime: 0.00
+[*] Not found a DFA with 1 states.
+[*] Solver has been restarted.
+= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+[*] Trying to build a DFA with 2 states.
+[t] Formula buildingtime: 0.03
+[*] Vars in CNF: 1674
+[*] Clauses in CNF: 8905
+[t] SAT solvingtime: 0.00
+[*] Not found a DFA with 2 states.
+[*] Solver has been restarted.
+= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+[*] Trying to build a DFA with 3 states.
+[t] Formula buildingtime: 0.07
+[*] Vars in CNF: 2520
+[*] Clauses in CNF: 19179
+[t] SAT solvingtime: 0.00
+[*] Not found a DFA with 3 states.
+[*] Solver has been restarted.
+= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+[*] Trying to build a DFA with 4 states.
+[t] Formula buildingtime: 0.12
+[*] Vars in CNF: 3372
+[*] Clauses in CNF: 33621
+[t] SAT solvingtime: 0.01
+[*] Not found a DFA with 4 states.
+[*] Solver has been restarted.
+= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+[*] Trying to build a DFA with 5 states.
+[t] Formula buildingtime: 0.19
+[*] Vars in CNF: 4230
+[*] Clauses in CNF: 52239
+[t] SAT solvingtime: 0.02
+[*] Not found a DFA with 5 states.
+[*] Solver has been restarted.
+= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+[*] Trying to build a DFA with 6 states.
+[t] Formula buildingtime: 0.25
+[*] Vars in CNF: 5094
+[*] Clauses in CNF: 75041
+[t] SAT solvingtime: 0.09
+[+] The DFA with 6 states is found!
+= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+[*] digraph DFA {
+    node [shape = circle];
+    0 [style = "bold"];
+    0 -> 1 [label = 0];
+    0 -> 2 [label = 1];
+    1 [peripheries=2]
+    1 -> 3 [label = 0];
+    1 -> 1 [label = 1];
+    2 -> 1 [label = 0];
+    2 -> 4 [label = 1];
+    3 -> 4 [label = 0];
+    3 -> 1 [label = 1];
+    4 -> 5 [label = 0];
+    4 -> 5 [label = 1];
+    5 -> 1 [label = 0];
+    5 -> 0 [label = 1];
+}
+
+[+] DFA is consistent with the given examples.
+[t] Whole tasktime: 1.30
