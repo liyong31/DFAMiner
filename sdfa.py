@@ -31,6 +31,9 @@ class sdfa:
         self.trans.append(dict())
         return self.num_states - 1
 
+    def get_num_trans(self):
+        return sum([len(state) for state in self.trans])
+
     def __verify_states__(self, state):
         return state < self.num_states and state >= 0
     
