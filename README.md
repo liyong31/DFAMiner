@@ -1,6 +1,9 @@
 # DFAMiner
 A python tool for mining a minimal DFA from a given set of labelled samples.
 
+For details of the algorithm, please read paper [[1]](#1):
+
+
 
 ## Requirements 
 
@@ -87,3 +90,10 @@ For each line, `i` is followed by an initial state, `a` by a final state, `r` by
 
 #### License
 See LICENSE.txt
+
+
+## References
+<a id="1">[1]</a> 
+Daniele Dell’Erba, Yong Li & Sven Schewe (2024). 
+DFAMiner: Mining Minimal Separating DFAs from Labelled Samples. 
+26th International Symposium on Formal Methods (FM 2024), LNCS 14934, 48--66.
