@@ -1,0 +1,6 @@
+Input alphabet size:  2
+# of states in positive DFA:  133
+# of states in negative DFA:  199
+Input SDFA size: 332
+Input SDFA trans: 555
+Elapsed time in miner: 0.0042 secs

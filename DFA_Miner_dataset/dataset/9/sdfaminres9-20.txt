@@ -1,0 +1,11 @@
+Input alphabet size:  2
+Input SDFA size: 385
+Input alphabet size: 2
+Looking for DFA with 1 states...
+adding constraints for BFS tree...
+Created # of vars: 392
+Created # of clauses: 750
+Found a DFA with size 1
+Elapsed time in minimiser: 0.0031 secs
+Output to res9-20.txt.dot
+Elapsed time in miner: 0.0233 secs

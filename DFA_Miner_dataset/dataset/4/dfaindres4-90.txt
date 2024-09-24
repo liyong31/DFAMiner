@@ -1,0 +1,53 @@
+[+] Successfully built an APTA from file 'res4-90.txt'
+[*] The APTA size: 555
+[t] APTA buildingtime: 0.00
+[*] Solver has been started.
+= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+[*] Trying to build a DFA with 1 states.
+[t] Formula buildingtime: 0.01
+[*] Vars in CNF: 558
+[*] Clauses in CNF: 0
+[t] SAT solvingtime: 0.00
+[*] Not found a DFA with 1 states.
+[*] Solver has been restarted.
+= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+[*] Trying to build a DFA with 2 states.
+[t] Formula buildingtime: 0.03
+[*] Vars in CNF: 1122
+[*] Clauses in CNF: 5945
+[t] SAT solvingtime: 0.00
+[*] Not found a DFA with 2 states.
+[*] Solver has been restarted.
+= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+[*] Trying to build a DFA with 3 states.
+[t] Formula buildingtime: 0.07
+[*] Vars in CNF: 1692
+[*] Clauses in CNF: 12807
+[t] SAT solvingtime: 0.00
+[*] Not found a DFA with 3 states.
+[*] Solver has been restarted.
+= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+[*] Trying to build a DFA with 4 states.
+[t] Formula buildingtime: 0.09
+[*] Vars in CNF: 2268
+[*] Clauses in CNF: 22457
+[t] SAT solvingtime: 0.00
+[+] The DFA with 4 states is found!
+= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+[*] digraph DFA {
+    node [shape = circle];
+    0 [style = "bold"];
+    0 [peripheries=2]
+    0 -> 0 [label = 0];
+    0 -> 1 [label = 1];
+    1 -> 2 [label = 0];
+    1 -> 2 [label = 1];
+    2 -> 2 [label = 0];
+    2 -> 3 [label = 1];
+    3 [peripheries=2]
+    3 -> 2 [label = 0];
+    3 -> 0 [label = 1];
+}
+
+[+] DFA is consistent with the given examples.
+[t] Whole tasktime: 0.20

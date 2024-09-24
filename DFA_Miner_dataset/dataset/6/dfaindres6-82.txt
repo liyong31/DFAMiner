@@ -1,0 +1,21 @@
+[+] Successfully built an APTA from file 'res6-82.txt'
+[*] The APTA size: 827
+[t] APTA buildingtime: 0.00
+[*] Solver has been started.
+= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+[*] Trying to build a DFA with 1 states.
+[t] Formula buildingtime: 0.01
+[*] Vars in CNF: 830
+[*] Clauses in CNF: 0
+[t] SAT solvingtime: 0.00
+[+] The DFA with 1 states is found!
+= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+[*] digraph DFA {
+    node [shape = circle];
+    0 [style = "bold"];
+    0 -> 0 [label = 0];
+    0 -> 0 [label = 1];
+}
+
+[+] DFA is consistent with the given examples.
+[t] Whole tasktime: 0.02

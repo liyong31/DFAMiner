@@ -17,7 +17,8 @@ class dfa_miner:
         self.num_letters = 0
         self.has_emptysample= False
         self.accept_empty = False
-    
+        self.args = None
+
     # need to check whether the DFA accepts odd word
     # or reject some even word
     # a word is even iff all the cylcles in it are even
@@ -84,6 +85,54 @@ class dfa_miner:
         # now sort them in place
         self.positve_samples.sort(key=cmp_to_key(strunion.dfa_builder.LEXICOGRAPHIC_ORDER))
         self.negative_samples.sort(key=cmp_to_key(strunion.dfa_builder.LEXICOGRAPHIC_ORDER))
+    
+    def infer_min_dfa(self):
+        sdfa = None
+        if self.args.sdfa:
+            # create the SDFA
+            samples = [ (sample, True) for sample in self.positve_samples]
+            samples.extend([(sample, False) for sample in self.negative_samples])
+            WORD_ORDER = lambda s1, s2: strunion.dfa_builder.LEXICOGRAPHIC_ORDER(s1[0], s2[0])
+            # now we sort them in place
+            samples.sort(key=cmp_to_key(WORD_ORDER))
+            builder = strunion.dfa_builder()
+            for sample in samples:
+                builder.add(sample[0], strunion.word_type.ACCEPT 
+                            if sample[1] else strunion.word_type.REJECT)
+            sdfa = strunion.dfa_builder.build(builder, self.num_letters)
+        else:
+            # create two regular DFAs
+            builder = strunion.dfa_builder()
+            # positive examples
+            for sample in self.positve_samples:
+                builder.add(sample, strunion.word_type.ACCEPT)
+            pos_dfa = strunion.dfa_builder.build(builder, self.num_letters)
+            print("# of states in positive DFA: ", pos_dfa.num_states)
+            
+            builder = strunion.dfa_builder()
+            # positive examples
+            for sample in self.negative_samples:
+                builder.add(sample, strunion.word_type.ACCEPT)
+            neg_dfa = strunion.dfa_builder.build(builder, self.num_letters)
+            print("# of states in negative DFA: ", neg_dfa.num_states)
+            # print(neg_dfa.dot())
+            
+            sdfa = SDFA.sdfa.combine(pos_dfa, neg_dfa, self.num_letters)
+            # print(sdfa.dot())
+            
+        # handle possible empty sample
+        if self.has_emptysample:
+            func = lambda x: sdfa.add_final_state(x) if self.accept_empty else sdfa.add_reject_state(x)
+            # initial states would not have incoming edges
+            for init in sdfa.init_states:
+                func(init)
+            
+        # now minimise
+        min = minimiser.sdfa_minimiser()
+        result_dfa = min.minimise(input_sdfa=sdfa, sat=self.args.solver
+            , lbound=self.args.lower, ubound=self.args.upper, nobfs=self.args.nobfs, safety=self.args.safety)
+        
+        return result_dfa
 
 # sorted(data, key=cmp_to_key(custom_comparator))
 if __name__ == '__main__':
@@ -122,51 +171,8 @@ if __name__ == '__main__':
     miner = dfa_miner()
     miner.read_samples(args.file)
     print("Input alphabet size: ", miner.num_letters)
-    result_dfa = None
-    sdfa = None
-    if args.sdfa:
-        # create the SDFA
-        samples = [ (sample, True) for sample in miner.positve_samples]
-        samples.extend([(sample, False) for sample in miner.negative_samples])
-        WORD_ORDER = lambda s1, s2: strunion.dfa_builder.LEXICOGRAPHIC_ORDER(s1[0], s2[0])
-        # now we sort them in place
-        samples.sort(key=cmp_to_key(WORD_ORDER))
-        builder = strunion.dfa_builder()
-        for sample in samples:
-            builder.add(sample[0], strunion.word_type.ACCEPT 
-                        if sample[1] else strunion.word_type.REJECT)
-        sdfa = strunion.dfa_builder.build(builder, miner.num_letters)
-    else:
-        # create two regular DFAs
-        builder = strunion.dfa_builder()
-        # positive examples
-        for sample in miner.positve_samples:
-            builder.add(sample, strunion.word_type.ACCEPT)
-        pos_dfa = strunion.dfa_builder.build(builder, miner.num_letters)
-        print("# of states in positive DFA: ", pos_dfa.num_states)
-        
-        builder = strunion.dfa_builder()
-        # positive examples
-        for sample in miner.negative_samples:
-            builder.add(sample, strunion.word_type.ACCEPT)
-        neg_dfa = strunion.dfa_builder.build(builder, miner.num_letters)
-        print("# of states in negative DFA: ", neg_dfa.num_states)
-        # print(neg_dfa.dot())
-        
-        sdfa = SDFA.sdfa.combine(pos_dfa, neg_dfa, miner.num_letters)
-        # print(sdfa.dot())
-        
-    # handle possible empty sample
-    if miner.has_emptysample:
-        func = lambda x: sdfa.add_final_state(x) if miner.accept_empty else sdfa.add_reject_state(x)
-        # initial states would not have incoming edges
-        for init in sdfa.init_states:
-            func(init)
-        
-    # now minimise
-    min = minimiser.sdfa_minimiser()
-    result_dfa = min.minimise(input_sdfa=sdfa, sat=args.solver
-         , lbound=args.lower, ubound=args.upper, nobfs=args.nobfs, safety=args.safety)
+    miner.args = args
+    result_dfa = miner.infer_min_dfa()
     
     if args.verify:
         miner.verify_conjecture_dfa(result_dfa)

@@ -1,0 +1,4 @@
+Input alphabet size:  2
+0  #states = 1
+Finished with 1 DFAs
+Elapsed time in dfa-identify: 0.5413 secs

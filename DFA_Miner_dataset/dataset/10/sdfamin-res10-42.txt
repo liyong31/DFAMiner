@@ -1,0 +1,4 @@
+Input alphabet size:  2
+Input SDFA size: 473
+Input SDFA trans: 820
+Elapsed time in miner: 0.0066 secs
