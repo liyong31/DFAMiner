@@ -197,6 +197,9 @@ class sdfa:
         for rej in self.reject_states:
             out_str.append("r " + str(rej))
         return "".join(out_str)
+    
+    def abbadingo(self): 
+        return self.__str__()
 
     def dot(self):
         str_list = []

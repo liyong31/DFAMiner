@@ -9,6 +9,8 @@ import time
 
 
 class dfa_miner:
+    OUTPUT_FORMAT = ['dot', 'abbadingo']
+    OUTPUT_FORMAT_DEFAULT = 'dot'
 
     def __init__(self):
         self.positve_samples = []
@@ -161,6 +163,14 @@ class dfa_miner:
         
         return result_dfa
 
+    def output_result(self, dfa, args):
+        with open(args.out, "w") as file:
+            match args.output_format:
+                case 'abbadingo': 
+                    file.write(dfa.abbadingo())
+                case 'dot':
+                    file.write(dfa.dot())
+
 # sorted(data, key=cmp_to_key(custom_comparator))
 if __name__ == '__main__':
     import argparse
@@ -171,6 +181,9 @@ if __name__ == '__main__':
                         help='path to input sample file')
     parser.add_argument('--out', metavar='path', required=True,
                         help='path to output DFA')
+    parser.add_argument('--output-format', type=str.lower, required=False,
+                        choices=dfa_miner.OUTPUT_FORMAT, default=dfa_miner.OUTPUT_FORMAT_DEFAULT,
+                        help='the format for the output')
     parser.add_argument('--solver', type=str.lower, required=False,
                         choices=minimiser.solver_choices, default="cadical153",
                         help='choose the SAT solver')
@@ -205,8 +218,7 @@ if __name__ == '__main__':
         miner.verify_conjecture_dfa(result_dfa)
         
     print("Output to " + args.out)
-    with open(args.out, "w") as file:
-        file.write(result_dfa.dot())
+    miner.output_result(result_dfa, args)
     end_time = time.time()
     elapsed_time = round(end_time - start_time, 4)
     print(f"Elapsed time in miner: {elapsed_time} secs")
