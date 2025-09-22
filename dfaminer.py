@@ -57,6 +57,33 @@ class dfa_miner:
 
     # read the competition files
     def read_samples(self, file_name):
+        match file_name.split('.')[-1]:
+            case "json":
+                self.read_samples_json(file_name)
+            case _:
+                self.read_samples_abbalingo(file_name)
+    
+    def read_samples_json(self, file_name):
+        with open(file_name, "r") as f:
+            import json
+            samples = json.load(f)
+        alphabet = samples['alphabet']
+        pos_samples = samples['accepting']
+        neg_samples = samples['rejecting']
+
+        self.num_letters = len(alphabet)
+        self.num_samples = len(pos_samples) + len(neg_samples)
+        if ('' in pos_samples) or ('' in neg_samples):
+            self.has_emptysample = True
+            self.accept_empty = ('' in pos_samples)
+        self.positve_samples = [[(lambda x: alphabet.index(x))(letter) for letter in sample] for sample in pos_samples]
+        self.negative_samples = [[(lambda x: alphabet.index(x))(letter) for letter in sample] for sample in neg_samples]
+
+        # now sort them in place
+        self.positve_samples.sort(key=cmp_to_key(strunion.dfa_builder.LEXICOGRAPHIC_ORDER))
+        self.negative_samples.sort(key=cmp_to_key(strunion.dfa_builder.LEXICOGRAPHIC_ORDER))
+
+    def read_samples_abbalingo(self, file_name):
         with open(file_name, "r") as f:
             # read line by line
             line_idx = 0
