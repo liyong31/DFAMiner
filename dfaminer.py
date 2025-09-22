@@ -73,6 +73,7 @@ class dfa_miner:
         pos_samples = samples['accepting']
         neg_samples = samples['rejecting']
 
+        self.alphabet = alphabet
         self.num_letters = len(alphabet)
         self.num_samples = len(pos_samples) + len(neg_samples)
         if ('' in pos_samples) or ('' in neg_samples):
@@ -114,7 +115,7 @@ class dfa_miner:
         # now sort them in place
         self.positve_samples.sort(key=cmp_to_key(strunion.dfa_builder.LEXICOGRAPHIC_ORDER))
         self.negative_samples.sort(key=cmp_to_key(strunion.dfa_builder.LEXICOGRAPHIC_ORDER))
-    
+
     def infer_min_dfa(self):
         sdfa = None
         if self.args.sdfa:
@@ -169,7 +170,7 @@ class dfa_miner:
                 case 'abbadingo': 
                     file.write(dfa.abbadingo())
                 case 'dot':
-                    file.write(dfa.dot())
+                    file.write(dfa.dot(self.alphabet))
 
 # sorted(data, key=cmp_to_key(custom_comparator))
 if __name__ == '__main__':

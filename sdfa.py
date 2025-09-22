@@ -2,6 +2,7 @@ import strunion
 import copy
 from hopcroft import sdfa_poly_minimiser
 from acyclic import sdfa_acyclic_minimiser
+import dfaminer
 
 # separated DFA for the positive and negative samples
 class sdfa:
@@ -201,7 +202,7 @@ class sdfa:
     def abbadingo(self): 
         return self.__str__()
 
-    def dot(self):
+    def dot(self, alphabet):
         str_list = []
         str_list.append("digraph {\n")
         # str_list.append("  rankdir=LR;\n")
@@ -216,7 +217,7 @@ class sdfa:
         for src, strans in enumerate(self.trans):
             for _, (c, dst) in enumerate(strans.items()):
                 str_list.append(
-                    " " + str(src) + " -> " + str(dst) + ' [label="' + str(c) + '"];\n'
+                    " " + str(src) + " -> " + str(dst) + ' [label="' + str(alphabet[c]) + '"];\n'
                 )
 
         num = 0
