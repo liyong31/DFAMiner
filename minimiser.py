@@ -429,7 +429,7 @@ class sdfa_minimiser:
 
 
 
-solver_choices = {"cadical103", "cadical153", "gluecard4", "glucose4",
+solver_choices = {"cadical103", "cadical153", "cadical195", "gluecard4", "glucose4",
                   "glucose42", "lingeling", "maplechrono", "mergesat3", "minisat22"}
 
 if __name__ == '__main__':
