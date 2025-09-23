@@ -156,7 +156,12 @@ class dfa_miner:
             # initial states would not have incoming edges
             for init in sdfa.init_states:
                 func(init)
-            
+
+        # output intermediate file, if needed    
+        if args.intermediate:
+            print("Output intermediate 3DFA to " + args.intermediate)
+            self.output_result(sdfa, args.intermediate, args.output_format)
+        
         # now minimise
         min = minimiser.sdfa_minimiser()
         result_dfa = min.minimise(input_sdfa=sdfa, sat=self.args.solver
@@ -164,9 +169,9 @@ class dfa_miner:
         
         return result_dfa
 
-    def output_result(self, dfa, args):
-        with open(args.out, "w") as file:
-            match args.output_format:
+    def output_result(self, dfa, output_path, output_format):
+        with open(output_path, "w") as file:
+            match output_format:
                 case 'abbadingo': 
                     file.write(dfa.abbadingo())
                 case 'dot':
@@ -185,6 +190,9 @@ if __name__ == '__main__':
     parser.add_argument('--output-format', type=str.lower, required=False,
                         choices=dfa_miner.OUTPUT_FORMAT, default=dfa_miner.OUTPUT_FORMAT_DEFAULT,
                         help='the format for the output')
+    parser.add_argument('--intermediate', metavar='path', required=False,
+                        default=None,
+                        help='path to output the intermediate 3DFA')
     parser.add_argument('--solver', type=str.lower, required=False,
                         choices=minimiser.solver_choices, default="cadical153",
                         help='choose the SAT solver')
@@ -219,7 +227,7 @@ if __name__ == '__main__':
         miner.verify_conjecture_dfa(result_dfa)
         
     print("Output to " + args.out)
-    miner.output_result(result_dfa, args)
+    miner.output_result(result_dfa, args.out, args.output_format)
     end_time = time.time()
     elapsed_time = round(end_time - start_time, 4)
     print(f"Elapsed time in miner: {elapsed_time} secs")
