@@ -199,7 +199,7 @@ class sdfa:
             out_str.append("r " + str(rej))
         return "".join(out_str)
     
-    def abbadingo(self): 
+    def textual(self): 
         return self.__str__()
 
     def dot(self, alphabet):

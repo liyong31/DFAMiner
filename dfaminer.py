@@ -9,8 +9,8 @@ import time
 
 
 class dfa_miner:
-    OUTPUT_FORMAT = ['dot', 'abbadingo']
-    OUTPUT_FORMAT_DEFAULT = 'dot'
+    OUTPUT_FORMAT = ['dot', 'textual']
+    OUTPUT_FORMAT_DEFAULT = 'textual'
 
     def __init__(self):
         self.positve_samples = []
@@ -172,8 +172,8 @@ class dfa_miner:
     def output_result(self, dfa, output_path, output_format):
         with open(output_path, "w") as file:
             match output_format:
-                case 'abbadingo': 
-                    file.write(dfa.abbadingo())
+                case 'textual': 
+                    file.write(dfa.textual())
                 case 'dot':
                     file.write(dfa.dot(self.alphabet))
 
