@@ -231,6 +231,22 @@ class sdfa:
             num += 1
         str_list.append("}\n")
         return "".join(str_list)
+    
+    def ba(self):
+        out_str = []
+        # out_str.append(str(self.num_states) + " " + str(self.num_letters) + "\n")
+        for init in self.init_states:
+            out_str.append("[" + str(init) + "]\n")
+
+        for src, strans in enumerate(self.trans):
+            # print(src, strans)
+            for _, (c, dst) in enumerate(strans.items()):
+                # print(c, dst)
+                out_str.append(str(c) + ",[" + str(src) + "]->[" + str(dst) + "]\n")
+        for fin in self.final_states:
+            out_str.append("[" + str(fin) + "]\n")
+        # only support dfas
+        return "".join(out_str)
 
     def load(self, file_name):
         bufsize = 65536

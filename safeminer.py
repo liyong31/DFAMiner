@@ -8,7 +8,10 @@ import time
 import sdfa as SDFA
 
 
-class sdfa_minimiser:
+class safe_miner:
+    
+    def __init__(self) -> None:
+        self.num_vars = 0
     # now we have trees, it is time to create numbers
     # 0 <= i < j <= n-1
     # 1. p_{j, i}: i is the parent of j in the BFS-tree
@@ -17,7 +20,7 @@ class sdfa_minimiser:
     # 4. r_{a,i,j}: there is a transition from i to j over a and no smaller transition
 
 
-    def create_variables(self, n, alphabet, pos_num, neg_num, neg_accep_states):
+    def create_variables(self, n, alphabet, pos_num, neg_num, neg_accep_states, reach):
 
         num = 1
         # variables for DFA transitions
@@ -54,11 +57,17 @@ class sdfa_minimiser:
         num += len(m_aux)
         # for rejecting negative samples
         # here we assume state n-1 is the sink state, we only care about accepting states here
-        neg_reach = [(p1, q1, p2, q2) for p1 in neg_accep_states for p2 in neg_accep_states
-                     for q1 in range(n-1) for q2 in range(n-1)]
-        neg_aux = {element : (index + num) for index, element in enumerate(neg_reach) }
+        neg_reach = None
+        if not reach:
+            neg_reach = [(p1, q1, p2, q2) for p1 in neg_accep_states for p2 in neg_accep_states
+                        for q1 in range(n-1) for q2 in range(n-1)]
+        else:
+            # novel reachability relation, only use target pairs
+            neg_reach = [ (q1, q2) for q1 in range(n-1) for q2 in range(n-1)]
+        neg_aux = {element : (index + num) for index, element in enumerate(neg_reach)}
         # print("reach vars:\n", neg_aux)
         print("#Number of vars: ", num + len(neg_aux))
+        self.num_vars = num + len(neg_aux)
 
         return (pos_nodes, neg_nodes, edges, parents, t_aux, m_aux, neg_aux)
     
@@ -130,40 +139,85 @@ class sdfa_minimiser:
         clauses = [ [ -nodes[s, n-1]] for s in accept_states]
         return clauses
     
-    def reject_negative_samples(self, nodes, edges, neg_aux, n, alphabet, neg_dba):
+    def reject_negative_samples(self, nodes, edges, neg_aux, reach, n, alphabet, neg_dba):
         
         clauses = []
         accept_states = { s for s in range(neg_dba.num_states) if not (s in neg_dba.reject_states) }
-
-        # q1 is any state, q2 is not sink, q1 /= q3
         tgt_states_triples = [(q1, q2, q3) for q1 in range(n-1) for q2 in range(n-1) for q3 in range(n-1)]
         ref_states_pairs = [(p1, p2) for p1 in accept_states for p2 in accept_states]
-        
-        # reachability relations
-        # (p1, q1, p2, q2) /\ e_{q2, a, q3} => (p1, q1, T(p2, a), q3)
-        # T(p2, a) not sink, T(p2, a) /= p1 does not close a loop 
-        sub_clauses = [[-neg_aux[p1, q1, p2, q2], -edges[q2, a, q3], neg_aux[p1, q1, neg_dba.trans[p2][a], q3]]
-                   for (q1, q2, q3) in tgt_states_triples 
-                   for (p1, p2) in ref_states_pairs
-                   for a in alphabet if not (neg_dba.trans[p2][a] in neg_dba.reject_states) and (neg_dba.trans[p2][a] != p1 or q1 != q3) ]
-        clauses += sub_clauses
-        
-        # q1 is a safe state
         tgt_state_pairs = [(q1, q2) for q1 in range(n-1) for q2 in range(n-1)]
-        ref_states_pairs = [(p1, p2) for p1 in accept_states for p2 in accept_states]
 
-        # not (p1, q1, p2, q2) or not e_(q_1, a, q2)
-        # contrary to this: when both close a loop, then they both are in the accepting region
-        clauses += [[-neg_aux[p1, q1, p2, q2], -edges[q2, a, q1]]
-                   for (q1, q2) in tgt_state_pairs 
-                   for (p1, p2) in ref_states_pairs
-                   for a in alphabet if (neg_dba.trans[p2][a] == p1) ]
-        # reachable states
-        pair = [ (p, q) for p in accept_states for q in range(n-1)]
-        # d_(p, q) => x_(p, q, p, q)
-        clauses += [ [-nodes[p, q], neg_aux[p, q, p, q]] for (p, q) in pair]
-        # acceptance conditions: (p, q, p, q') /\ p not sink => q' the sink
-        # equivalent to: q' is not the sink => not (p, q, p, q') or p is sink 
+        if not reach:
+            # q1 is any state, q2 is not sink, q1 /= q3
+            ref_states_pairs = [(p1, p2) for p1 in accept_states for p2 in accept_states]
+            
+            # reachability relations
+            # (p1, q1, p2, q2) /\ e_{q2, a, q3} => (p1, q1, T(p2, a), q3)
+            # T(p2, a) not sink, T(p2, a) /= p1 does not close a loop 
+            sub_clauses = [[-neg_aux[p1, q1, p2, q2], -edges[q2, a, q3], neg_aux[p1, q1, neg_dba.trans[p2][a], q3]]
+                    for (q1, q2, q3) in tgt_states_triples 
+                    for (p1, p2) in ref_states_pairs
+                    for a in alphabet if not (neg_dba.trans[p2][a] in neg_dba.reject_states) and (neg_dba.trans[p2][a] != p1 or q1 != q3) ]
+            clauses += sub_clauses
+            
+            # q1 is a safe state
+            # tgt_state_pairs = [(q1, q2) for q1 in range(n-1) for q2 in range(n-1)]
+
+            # not (p1, q1, p2, q2) or not e_(q_1, a, q2)
+            # contrary to this: when both close a loop, then they both are in the accepting region
+            clauses += [[-neg_aux[p1, q1, p2, q2], -edges[q2, a, q1]]
+                    for (q1, q2) in tgt_state_pairs 
+                    for (p1, p2) in ref_states_pairs
+                    for a in alphabet if (neg_dba.trans[p2][a] == p1) ]
+            # reachable states
+            pair = [ (p, q) for p in accept_states for q in range(n-1)]
+            # d_(p, q) => x_(p, q, p, q)
+            clauses += [ [-nodes[p, q], neg_aux[p, q, p, q]] for (p, q) in pair]
+            # not d_{p, q} => not x_(p, q, p1, q1) for all successors
+            clauses += [ [nodes[p, q], -neg_aux[p, q, p1, q1]] for (p, q) in pair for (p1, q1) in pair]
+
+            # acceptance conditions: (p, q, p, q') /\ p not sink => q' the sink
+            # equivalent to: q' is not the sink => not (p, q, p, q') or p is sink 
+        else:
+            print(neg_aux)
+            dba_aux = {pair : (index + self.num_vars) for index, pair in enumerate(ref_states_pairs)}
+            self.num_vars += len(dba_aux)
+            print("Num of vars:", self.num_vars, len(dba_aux))
+            print(dba_aux)
+            # now we need to add transition relation for the pairs (p, q) where p can reach q without visiting
+            # sink state also, the word can run in reference automaton
+            # d_{p2, q_2} /\ (r_{q1, q_2} /\ [\/_{a in alphabet} e_{q2, a, q_3})] => r_{q_1, q3}
+            sub_clauses = [[-nodes[p1, q1], -neg_aux[q1, q2], -dba_aux[p1, p2], -edges[q2, a, q3], neg_aux[q1, q3]]
+                           for (q1, q2, q3) in tgt_states_triples
+                           for (p1, p2) in ref_states_pairs
+                           for a in alphabet if (neg_dba.trans[p2][a] in accept_states) and (neg_dba.trans[p2][a] != p1 or q1 != q3) ]
+            clauses += sub_clauses
+
+            sub_clauses = [[-nodes[p1, q1], -neg_aux[q1, q2], -dba_aux[p1, p2], -edges[q2, a, q3], dba_aux[p1, neg_dba.trans[p2][a]]]
+                           for (q1, q2, q3) in tgt_states_triples
+                           for (p1, p2) in ref_states_pairs
+                           for a in alphabet if (neg_dba.trans[p2][a] in accept_states) and (neg_dba.trans[p2][a] != p1 or q1 != q3) ]
+            clauses += sub_clauses
+            # clauses += [[-nodes[q1, q2], -neg_aux[p2, q2], -edges[q2, a, q3], -neg_aux[q1, q3]]
+            #         for (q1, q2, q3) in tgt_states_triples 
+            #         for p2 in accept_states
+            #         for a in alphabet if (neg_dba.trans[p2][a] in neg_dba.reject_states)]
+
+            # Close a loop and have overlap: d_{p1, q1} /\ d_{p2, q2} /\ p1 = T(p2, a) /\ e_{q2, a, q1} /\ r_{q1, q2} 
+            # contrary to this: when both close a loop, then they both are in the accepting region
+            clauses += [[-nodes[p1, q1], -nodes[p2, q2], -neg_aux[q1, q2], -dba_aux[p1, p2], -edges[q2, a, q1]]
+                    for (q1, q2) in tgt_state_pairs 
+                    for (p1, p2) in ref_states_pairs
+                    for a in alphabet if (neg_dba.trans[p2][a] == p1) ]
+            # reachable states
+            # pair = [ (q, q) for q in range(n-1)]
+            # all states can reach itself
+            clauses += [[neg_aux[0, 0]]]
+            clauses += [[dba_aux[p, p]] for p in neg_dba.init_states]
+            # pair = [ (p, q) for p in accept_states for q in range(n-1)]
+            # clauses += [ [-nodes[p, q], neg_aux[q, q]] for (p, q) in pair]
+            # clauses += [ [-nodes[p, q], dba_aux[p, p]] for (p, q) in pair]
+
         return clauses
 
     def create_dfa_cnf(self, nodes, edges, input_sdfa, n, alphabet):
@@ -328,6 +382,10 @@ class sdfa_minimiser:
         clauses = edge_rel + clauses
 
         return clauses
+    
+    def create_symmetry_break(self, edges, n, alphabet):
+        pairs = [(p, q) for p in range(n-1) for q in range(n) for q in range(n) if p < q]
+        return [[-edges[p, a, q]] for (p, q) in pairs for a in alphabet if a > (p) * n + q + 3]
 
     # here we define the DSA constraints
     # DSA with n-1 safe states and 1 rejecting sink
@@ -357,12 +415,12 @@ class sdfa_minimiser:
         # 5. initial state 0 must go to other state (not sink) over odd letters        
         clauses += [[-edges[0, ol, 0]] for ol in odd_colors]
         clauses += [[-edges[0, ol, n-1]] for ol in odd_colors]
-
+        
         return clauses
 
 
     def create_cnf(self, posnodes, negnodes, edges, parents, t_aux, m_aux, neg_aux, pos_dba, neg_dba
-                , n, alphabet, nobfs, parity):
+                , n, alphabet, nobfs, parity, reach):
         # we assume that 0 is the initial state and n-1 is the sink reject state
         clauses = self.make_deterministic_complete(edges, n, alphabet)
         # consistent with the samples on transitions
@@ -373,7 +431,7 @@ class sdfa_minimiser:
         sub_clauses = self.accept_positive_samples(posnodes, n, pos_dba)
         # consistent with negative samples
         clauses += sub_clauses
-        sub_clauses = self.reject_negative_samples(negnodes, edges, neg_aux, n, alphabet, neg_dba)
+        sub_clauses = self.reject_negative_samples(negnodes, edges, neg_aux, reach, n, alphabet, neg_dba)
         clauses += sub_clauses
         # sys.exit(0)
         clauses += self.make_safe(edges, n, alphabet)
@@ -382,7 +440,8 @@ class sdfa_minimiser:
         if not nobfs:
             sub_clauses = self.create_BFStree_cnf(edges, parents, t_aux, m_aux, n, alphabet, True)
             clauses = sub_clauses + clauses
-        
+        else:
+            clauses += self.create_symmetry_break(edges, n, alphabet)   
         if parity:
             sub_clauses = self.create_DSA_cnf(edges, n, alphabet)
             clauses = sub_clauses + clauses
@@ -421,21 +480,21 @@ class sdfa_minimiser:
 
 
     def solve(self,
-            sat, n, alphabet, pos_dba, neg_dba, nobfs, parity):
+            sat, n, alphabet, pos_dba, neg_dba, nobfs, parity, reach):
 
         accept_states = { s for s in range(neg_dba.num_states) if not (s in neg_dba.reject_states)}
         posnodes, negnodes, edges, parents, t_aux, m_aux, neg_aux = self.create_variables(n
                                                                     , alphabet
                                                                     , pos_dba.num_states
                                                                     , neg_dba.num_states
-                                                                    , accept_states)
+                                                                    , accept_states, reach)
         # solvers, Glucose3(), Cadical103(), Cadical153(), Gluecard4(), Glucose42()
         # g = Cadical153() #Lingeling() #Glucose42()
         # g = Glucose42()
         g = Solver(name=sat)
 
         clauses = self.create_cnf(posnodes, negnodes, edges, parents, t_aux, m_aux, neg_aux
-                           , pos_dba, neg_dba, n, alphabet, nobfs, parity)
+                           , pos_dba, neg_dba, n, alphabet, nobfs, parity, reach)
         print("Created # of clauses: " + str(len(clauses)))
         for cls in clauses:
             # print(cls)
@@ -445,9 +504,19 @@ class sdfa_minimiser:
         #print(is_sat)
 
         if is_sat:
-            #print(g.get_model())
+            print(g.get_model())
             print("Found a DFA with size " + str(n))
             model = g.get_model()
+            for p in range(n-1):
+                for q in range(n-1):
+                    if reach:
+                        print("[", p, ", ", q, "]=", neg_aux[p, q])
+                        print( model[neg_aux[p,q] - 1] > 0)
+            print("product")
+            for p in range(neg_dba.num_states):
+                for q in range(n):
+                        print("[", p, ", ", q, "]=", negnodes[p, q])
+                        print( model[negnodes[p,q] - 1] > 0)
             # now print out transition relation
             # print("type(model) = " + str(type(model)))
             dfa = self.construct_dfa_from_model(model, edges, n, alphabet)
@@ -458,7 +527,7 @@ class sdfa_minimiser:
 
 
     def minimise(self,
-            pos_dba, neg_dba, sat, lbound, ubound, nobfs, parity):
+            pos_dba, neg_dba, sat, lbound, ubound, nobfs, parity, reach):
 
         assert pos_dba.num_letters == neg_dba.num_letters
         
@@ -478,7 +547,7 @@ class sdfa_minimiser:
         start_time = time.time()
         while n <= max_bound:
             print("Looking for DFA with " + str(n) + " states...")
-            res, dfa = self.solve(sat, n, alphabet, pos_dba, neg_dba, nobfs, parity)
+            res, dfa = self.solve(sat, n, alphabet, pos_dba, neg_dba, nobfs, parity, reach)
             if res:
                 result_dfa = dfa
                 break
@@ -491,7 +560,7 @@ class sdfa_minimiser:
 
 
 
-solver_choices = {"cadical103", "cadical153", "gluecard4", "glucose4",
+solver_choices = {"cadical195", "cadical103", "cadical153", "gluecard4", "glucose4",
                   "glucose42", "lingeling", "maplechrono", "mergesat3", "minisat22"}
 
 if __name__ == '__main__':
@@ -506,7 +575,7 @@ if __name__ == '__main__':
     parser.add_argument('--out', metavar='path', required=True,
                         help='path to output FA')
     parser.add_argument('--solver', type=str.lower, required=False,
-                        choices=solver_choices, default="cadical153",
+                        choices=solver_choices, default="cadical195",
                         help='choose the SAT solver')
     parser.add_argument('--lower', type=int, required=False,
                         default=1,
@@ -520,8 +589,11 @@ if __name__ == '__main__':
     parser.add_argument('--parity', action="store_true", required=False,
                         default=False,
                         help='construct safety DBA for solving parity games')
+    parser.add_argument('--reach', action="store_true", required=False,
+                        default=False,
+                        help='novel reachability relation encoding')
     args = parser.parse_args()
-    minimiser = sdfa_minimiser() 
+    minimiser = safe_miner() 
     pos = SDFA.sdfa()
     pos.load(args.pos)
     neg = SDFA.sdfa()
@@ -530,9 +602,9 @@ if __name__ == '__main__':
         file.write(pos.dot())
     with open("neg.dot", "w") as file:
         file.write(neg.dot())
-    print("Launch sdfa minimiser...")
+    print("Launch DBA minimiser...")
     dfa = minimiser.minimise(pos_dba=pos, neg_dba=neg, sat=args.solver
-         , lbound=args.lower, ubound=args.upper, nobfs=args.nobfs, parity=args.parity)
+         , lbound=args.lower, ubound=args.upper, nobfs=args.nobfs, parity=args.parity, reach=args.reach)
     print("Output to " + args.out)
     with open(args.out, "w") as file:
         file.write(dfa.dot())
