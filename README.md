@@ -19,20 +19,24 @@ TODO
 For usage, type <b>`python3 dfaminer.py --help`</b>.
 
 ```
-Usage: dfaminer.py [-h] --file path --out path [--solver {glucose4,minisat22,maplechrono,mergesat3,gluecard4,lingeling,cadical153,cadical103,glucose42}] [--lower LOWER] [--upper UPPER] [--sdfa]
-                   [--nobfs] [--safety] [--verify]
+usage: dfaminer.py [-h] --file path --out path [--output-format {dot,textual}] [--intermediate path]
+                   [--solver {glucose4,glucose42,minisat22,cadical103,cadical153,lingeling,maplechrono,gluecard4,cadical195,mergesat3}] [--lower LOWER] [--upper UPPER] [--3dfa] [--nobfs]
+                   [--safety] [--verify]
 
-Infer minimal DFA consistent with samples
+Mining a minimal DFA consistent with samples
 
 options:
   -h, --help            show this help message and exit
-  --file path           path to input FA
-  --out path            path to output FA
-  --solver {glucose4,minisat22,maplechrono,mergesat3,gluecard4,lingeling,cadical153,cadical103,glucose42}
+  --file path           path to input sample file
+  --out path            path to output DFA
+  --output-format {dot,textual}
+                        the format for the output
+  --intermediate path   path to output the intermediate 3DFA
+  --solver {glucose4,glucose42,minisat22,cadical103,cadical153,lingeling,maplechrono,gluecard4,cadical195,mergesat3}
                         choose the SAT solver
   --lower LOWER         the lower bound for the DFA
   --upper UPPER         the upper bound for the DFA
-  --sdfa                use SDFA for inference
+  --3dfa                use three valued DFA for inference
   --nobfs               disable the constraints for BFS tree
   --safety              construct safety DFA for solving parity games
   --verify              verify resultant DFA
@@ -61,9 +65,18 @@ The first line gives the number of samples and the size of the alphabet.
 Each line after that will first specify the membership of the word, the length of the word and the word sequence.
 Here `1` means accept, `0` reject and `-1` don't care.
 
+It also accepts an equivalent JSON file as follows:
+```
+{ 
+  "alphabet": ["0", "1"], 
+  "accepting": ["000", "001", "100"], 
+  "rejecting": ["010", "011", "101", "110", "111"]
+}
+```
+
 #### Minimiser
 One can also use minimiser.py as a standalone tool to minimise DFAs with don't care words.
-An example input file is `data2-3-all-dfa.txt`:
+An example input file is `intermediate_3dfa.txt`:
 ```
 8 2
 i 0
