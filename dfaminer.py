@@ -202,8 +202,8 @@ if __name__ == '__main__':
     parser.add_argument('--upper', type=int, required=False,
                         default=sys.maxsize,
                         help='the upper bound for the DFA')
-    parser.add_argument('--sdfa', action="store_true", required=False,
-                        default=False,
+    parser.add_argument('--3dfa', action="store_true", required=False,
+                        default=False, dest='sdfa',
                         help='use SDFA for inference')
     parser.add_argument('--nobfs', action="store_true", required=False,
                         default=False,
