@@ -204,7 +204,7 @@ if __name__ == '__main__':
                         help='the upper bound for the DFA')
     parser.add_argument('--sdfa', action="store_true", required=False,
                         default=False,
-                        help='use SDFA for inference')
+                        help='use three valued DFA for representation')
     parser.add_argument('--nobfs', action="store_true", required=False,
                         default=False,
                         help='disable the constraints for BFS tree')
