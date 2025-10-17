@@ -59,9 +59,15 @@ class dfa_miner:
 
     # read the competition files
     def read_samples(self, file_name):
+        import os
+        if not os.path.exists(file_name):
+            raise FileNotFoundError(f"File not found: {file_name}")
+        
         match file_name.split('.')[-1]:
             case "json":
                 self.read_samples_json(file_name)
+            case "py":
+                self.read_samples_py(file_name)
             case _:
                 self.read_samples_abbalingo(file_name)
     
@@ -82,6 +88,42 @@ class dfa_miner:
         self.positve_samples = [[(lambda x: alphabet.index(x))(letter) for letter in sample] for sample in pos_samples]
         self.negative_samples = [[(lambda x: alphabet.index(x))(letter) for letter in sample] for sample in neg_samples]
 
+        # now sort them in place
+        self.positve_samples.sort(key=cmp_to_key(strunion.dfa_builder.LEXICOGRAPHIC_ORDER))
+        self.negative_samples.sort(key=cmp_to_key(strunion.dfa_builder.LEXICOGRAPHIC_ORDER))
+
+    def read_samples_py(self, file_name):    
+        # Read file content
+        with open(file_name, 'r') as f:
+            python_content = f.read()
+        
+        # Create namespace to execute file content
+        namespace = {}
+        try:
+            exec(python_content, namespace)
+        except Exception as e:
+            raise ValueError(f"Error executing file {file_name}: {e}")
+        
+        # Extract positive_samples and negative_samples
+        if 'positive_samples' in namespace:
+            pos_samples = namespace['positive_samples']
+        else:
+            pos_samples = []
+        if 'negative_samples' in namespace:
+            neg_samples = namespace['negative_samples']
+        else:
+            neg_samples = []
+        alphabet = sorted(set(letter for all_samples in pos_samples + neg_samples for letter in all_samples))
+
+        self.alphabet = alphabet
+        self.num_letters = len(alphabet)
+        self.num_samples = len(pos_samples) + len(neg_samples)
+        if ([] in pos_samples) or ([] in neg_samples):
+            self.has_emptysample = True
+            self.accept_empty = ([] in pos_samples)
+        self.positve_samples = [[(lambda x: alphabet.index(x))(letter) for letter in sample] for sample in pos_samples]
+        self.negative_samples = [[(lambda x: alphabet.index(x))(letter) for letter in sample] for sample in neg_samples]
+       
         # now sort them in place
         self.positve_samples.sort(key=cmp_to_key(strunion.dfa_builder.LEXICOGRAPHIC_ORDER))
         self.negative_samples.sort(key=cmp_to_key(strunion.dfa_builder.LEXICOGRAPHIC_ORDER))
