@@ -141,6 +141,7 @@ class dfa_miner:
                 elif line_idx <= 0:
                     self.num_samples = int(line_brk[0])
                     self.num_letters = int(line_brk[1])
+                    self.alphabet = range(self.num_letters)
                 else:
                     mq, w = self.get_word(line_brk)
                     # special case for empty sample
