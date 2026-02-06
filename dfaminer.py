@@ -13,7 +13,7 @@ class dfa_miner:
     OUTPUT_FORMAT_DEFAULT = 'textual'
 
     def __init__(self):
-        self.positve_samples = []
+        self.positive_samples = []
         self.negative_samples = []
         self.num_samples = 0
         self.num_letters = 0
@@ -23,8 +23,8 @@ class dfa_miner:
 
     # need to check whether the DFA accepts odd word
     # or reject some even word
-    # a word is even iff all the cylcles in it are even
-    # similarly a word is odd iff all the cylces are odd
+    # a word is even iff all the cycles in it are even
+    # similarly a word is odd iff all the cycles are odd
     # so there are some word that is neither even nor odd
     def verify_conjecture_dfa(self, dfa):
         # we verify by enumerating all possible words
@@ -33,7 +33,7 @@ class dfa_miner:
             init = i
             break
 
-        for p in self.positve_samples:
+        for p in self.positive_samples:
             # print("word: = " + str(p))
             res = dfa.run(init, p)
             # print("label: = " + str( res == strunion.word_type.ACCEPT))
@@ -85,11 +85,11 @@ class dfa_miner:
         if ('' in pos_samples) or ('' in neg_samples):
             self.has_emptysample = True
             self.accept_empty = ('' in pos_samples)
-        self.positve_samples = [[(lambda x: alphabet.index(x))(letter) for letter in sample] for sample in pos_samples]
+        self.positive_samples = [[(lambda x: alphabet.index(x))(letter) for letter in sample] for sample in pos_samples]
         self.negative_samples = [[(lambda x: alphabet.index(x))(letter) for letter in sample] for sample in neg_samples]
 
         # now sort them in place
-        self.positve_samples.sort(key=cmp_to_key(strunion.dfa_builder.LEXICOGRAPHIC_ORDER))
+        self.positive_samples.sort(key=cmp_to_key(strunion.dfa_builder.LEXICOGRAPHIC_ORDER))
         self.negative_samples.sort(key=cmp_to_key(strunion.dfa_builder.LEXICOGRAPHIC_ORDER))
 
     def read_samples_py(self, file_name):    
@@ -121,11 +121,11 @@ class dfa_miner:
         if ([] in pos_samples) or ([] in neg_samples):
             self.has_emptysample = True
             self.accept_empty = ([] in pos_samples)
-        self.positve_samples = [[(lambda x: alphabet.index(x))(letter) for letter in sample] for sample in pos_samples]
+        self.positive_samples = [[(lambda x: alphabet.index(x))(letter) for letter in sample] for sample in pos_samples]
         self.negative_samples = [[(lambda x: alphabet.index(x))(letter) for letter in sample] for sample in neg_samples]
        
         # now sort them in place
-        self.positve_samples.sort(key=cmp_to_key(strunion.dfa_builder.LEXICOGRAPHIC_ORDER))
+        self.positive_samples.sort(key=cmp_to_key(strunion.dfa_builder.LEXICOGRAPHIC_ORDER))
         self.negative_samples.sort(key=cmp_to_key(strunion.dfa_builder.LEXICOGRAPHIC_ORDER))
 
     def read_samples_abbalingo(self, file_name):
@@ -150,20 +150,20 @@ class dfa_miner:
                         self.accept_empty = (mq == 1)
                         continue
                     if mq == 1:
-                        self.positve_samples.append(w)
+                        self.positive_samples.append(w)
                     elif mq == 0:
                         self.negative_samples.append(w)
                 line_idx += 1
 
         # now sort them in place
-        self.positve_samples.sort(key=cmp_to_key(strunion.dfa_builder.LEXICOGRAPHIC_ORDER))
+        self.positive_samples.sort(key=cmp_to_key(strunion.dfa_builder.LEXICOGRAPHIC_ORDER))
         self.negative_samples.sort(key=cmp_to_key(strunion.dfa_builder.LEXICOGRAPHIC_ORDER))
 
     def infer_min_dfa(self):
         sdfa = None
         if self.args.sdfa:
             # create the SDFA
-            samples = [ (sample, True) for sample in self.positve_samples]
+            samples = [ (sample, True) for sample in self.positive_samples]
             samples.extend([(sample, False) for sample in self.negative_samples])
             WORD_ORDER = lambda s1, s2: strunion.dfa_builder.LEXICOGRAPHIC_ORDER(s1[0], s2[0])
             # now we sort them in place
@@ -177,7 +177,7 @@ class dfa_miner:
             # create two regular DFAs
             builder = strunion.dfa_builder()
             # positive examples
-            for sample in self.positve_samples:
+            for sample in self.positive_samples:
                 builder.add(sample, strunion.word_type.ACCEPT)
             pos_dfa = strunion.dfa_builder.build(builder, self.num_letters)
             print("# of states in positive DFA: ", pos_dfa.num_states)
@@ -200,7 +200,7 @@ class dfa_miner:
             for init in sdfa.init_states:
                 func(init)
 
-        # output intermediate file, if needed    
+        # output intermediate file, if needed
         if args.intermediate:
             print("Output intermediate 3DFA to " + args.intermediate)
             self.output_result(sdfa, args.intermediate, args.output_format)
@@ -225,9 +225,7 @@ class dfa_miner:
 # sorted(data, key=cmp_to_key(custom_comparator))
 if __name__ == '__main__':
     import argparse
-
-    parser = argparse.ArgumentParser(
-        description='Mining a minimal DFA consistent with samples')
+    parser = argparse.ArgumentParser(description='Mining a minimal DFA consistent with samples')
     parser.add_argument('--file', metavar='path', required=True,
                         help='path to input sample file')
     parser.add_argument('--out', metavar='path', required=True,
