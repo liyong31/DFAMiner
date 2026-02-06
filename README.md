@@ -1,7 +1,7 @@
 # DFAMiner
 A python tool for mining a minimal DFA from a given set of labelled samples.
 
-For details of the algorithm, please read paper [[1]](#1):
+For details of the algorithm, please read the paper [[1]](#1).
 
 
 
@@ -73,6 +73,11 @@ It also accepts an equivalent JSON file as follows:
   "rejecting": ["010", "011", "101", "110", "111"]
 }
 ```
+or directly the equivalent Python code
+```
+positive_samples = [['0', '0', '0'], ['0', '0', '1'], ['1', '0', '0']]
+negative_samples = [['0', '1', '0'], ['0', '1', '1'], ['1', '0', '1'], ['1', '1', '0'], ['1', '1', '1']]
+``` 
 
 #### Minimiser
 One can also use minimiser.py as a standalone tool to minimise DFAs with don't care words.
