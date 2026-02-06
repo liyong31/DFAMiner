@@ -213,6 +213,8 @@ class dfa_miner:
         return result_dfa
 
     def output_result(self, dfa, output_path, output_format):
+        if output_path.split('.')[-1] == 'dot' and output_format != 'dot':
+            print ("Warning: inconsistent DOT output file format. File extension: .dot; actual content: textual")
         with open(output_path, "w") as file:
             match output_format:
                 case 'textual': 
