@@ -227,14 +227,14 @@ if __name__ == '__main__':
     # instantiate the command line options parser
     import argparse
     parser = argparse.ArgumentParser(description='Mining a minimal DFA consistent with samples')
-    parser.add_argument('--file', metavar='path', required=True,
+    parser.add_argument('--file', metavar='path', type=str, required=True,
                         help='path to input sample file')
-    parser.add_argument('--out', metavar='path', required=True,
+    parser.add_argument('--out', metavar='path', type=str, required=True,
                         help='path to output DFA')
     parser.add_argument('--output-format', type=str.lower, required=False,
                         choices=dfa_miner.OUTPUT_FORMAT, default=dfa_miner.OUTPUT_FORMAT_DEFAULT,
                         help='the format for the output (default: %(default)s)')
-    parser.add_argument('--intermediate', metavar='path', required=False,
+    parser.add_argument('--intermediate', metavar='path', type=str, required=False,
                         default=None,
                         help='path to output the intermediate 3DFA')
     parser.add_argument('--solver', type=str.lower, required=False,
