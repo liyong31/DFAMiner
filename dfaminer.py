@@ -232,16 +232,16 @@ if __name__ == '__main__':
                         help='path to output DFA')
     parser.add_argument('--output-format', type=str.lower, required=False,
                         choices=dfa_miner.OUTPUT_FORMAT, default=dfa_miner.OUTPUT_FORMAT_DEFAULT,
-                        help='the format for the output')
+                        help='the format for the output (default: %(default)s)')
     parser.add_argument('--intermediate', metavar='path', required=False,
                         default=None,
                         help='path to output the intermediate 3DFA')
     parser.add_argument('--solver', type=str.lower, required=False,
                         choices=minimiser.solver_choices, default="cadical153",
-                        help='choose the SAT solver')
+                        help='choose the SAT solver (default: %(default)s)')
     parser.add_argument('--lower', type=int, required=False,
                         default=1,
-                        help='the lower bound for the DFA')
+                        help='the lower bound for the DFA (default: %(default)s)')
     parser.add_argument('--upper', type=int, required=False,
                         default=sys.maxsize,
                         help='the upper bound for the DFA')
