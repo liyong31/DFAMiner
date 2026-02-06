@@ -75,6 +75,7 @@ class dfa_miner:
         with open(file_name, "r") as f:
             import json
             samples = json.load(f)
+
         alphabet = samples['alphabet']
         pos_samples = samples['accepting']
         neg_samples = samples['rejecting']
@@ -82,9 +83,13 @@ class dfa_miner:
         self.alphabet = alphabet
         self.num_letters = len(alphabet)
         self.num_samples = len(pos_samples) + len(neg_samples)
+
+        # check whether the empty word is one of the samples
         if ('' in pos_samples) or ('' in neg_samples):
             self.has_emptysample = True
             self.accept_empty = ('' in pos_samples)
+
+        # letters in the alphabet are represented internally as natural numbers, so convert them accordingly
         self.positive_samples = [[(lambda x: alphabet.index(x))(letter) for letter in sample] for sample in pos_samples]
         self.negative_samples = [[(lambda x: alphabet.index(x))(letter) for letter in sample] for sample in neg_samples]
 
@@ -93,18 +98,18 @@ class dfa_miner:
         self.negative_samples.sort(key=cmp_to_key(strunion.dfa_builder.LEXICOGRAPHIC_ORDER))
 
     def read_samples_py(self, file_name):    
-        # Read file content
+        # read the file content
         with open(file_name, 'r') as f:
             python_content = f.read()
         
-        # Create namespace to execute file content
+        # create a namespace to execute the file content
         namespace = {}
         try:
             exec(python_content, namespace)
         except Exception as e:
             raise ValueError(f"Error executing file {file_name}: {e}")
         
-        # Extract positive_samples and negative_samples
+        # extract positive_samples and negative_samples
         if 'positive_samples' in namespace:
             pos_samples = namespace['positive_samples']
         else:
@@ -113,18 +118,23 @@ class dfa_miner:
             neg_samples = namespace['negative_samples']
         else:
             neg_samples = []
+        # reconstruct the used alphabet
         alphabet = sorted(set(letter for all_samples in pos_samples + neg_samples for letter in all_samples))
 
         self.alphabet = alphabet
         self.num_letters = len(alphabet)
         self.num_samples = len(pos_samples) + len(neg_samples)
+
+        # check whether the empty word is one of the samples
         if ([] in pos_samples) or ([] in neg_samples):
             self.has_emptysample = True
             self.accept_empty = ([] in pos_samples)
+
+        # letters in the alphabet are represented internally as natural numbers, so convert them accordingly
         self.positive_samples = [[(lambda x: alphabet.index(x))(letter) for letter in sample] for sample in pos_samples]
         self.negative_samples = [[(lambda x: alphabet.index(x))(letter) for letter in sample] for sample in neg_samples]
        
-        # now sort them in place
+        # now sort the samples in place
         self.positive_samples.sort(key=cmp_to_key(strunion.dfa_builder.LEXICOGRAPHIC_ORDER))
         self.negative_samples.sort(key=cmp_to_key(strunion.dfa_builder.LEXICOGRAPHIC_ORDER))
 
