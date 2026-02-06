@@ -224,6 +224,7 @@ class dfa_miner:
 
 # sorted(data, key=cmp_to_key(custom_comparator))
 if __name__ == '__main__':
+    # instantiate the command line options parser
     import argparse
     parser = argparse.ArgumentParser(description='Mining a minimal DFA consistent with samples')
     parser.add_argument('--file', metavar='path', required=True,
@@ -259,6 +260,7 @@ if __name__ == '__main__':
                         help='verify resultant DFA')
     args = parser.parse_args()
     
+    # start the execution of dfaminer
     start_time = time.time()
     miner = dfa_miner()
     miner.read_samples(args.file)
