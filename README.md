@@ -7,12 +7,29 @@ For details of the algorithm, please read the paper [[1]](#1).
 
 ## Requirements 
 
-* python 3.7+
+* Python 3.10+
+* [DFA](https://github.com/mvcisback/dfa)
 * [PySAT](https://github.com/pysathq/pysat)
 
 ## Installation
 
-TODO
+DFAMiner requires additional Python libraries that are usually not available in the ordinary software repository of the used operating system.
+To avoid creating inconsistencies with the Python libraries installed system-wide, DFAMiner can be used inside a virtual environment.
+This can be achieved as follows:
+* Download and install a virtual environment manager; below we refer to [MiniConda](https://www.anaconda.com/docs/getting-started/miniconda/main)
+* Create a virtual environment
+```
+conda create -n dfaminer python=3.10
+conda activate dfaminer
+```
+* Install the required packages
+```
+pip install dfa python-sat[aiger,approxmc,cryptosat,pblib]
+```
+* To deactivate the environment, just use
+```
+conda deactivate
+```
 
 ## Usage
 
