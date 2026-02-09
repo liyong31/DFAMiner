@@ -1,3 +1,11 @@
+"""
+DFA Miner module for inferring minimal Deterministic Finite Automata from samples.
+
+This module provides functionality to mine DFAs consistent with positive and negative
+samples using SAT-based techniques for minimization. It supports multiple input formats
+(JSON, Python, and ABBALINGO formats) and can output results in textual or DOT format.
+"""
+
 import sdfa as SDFA
 import strunion
 import minimiser
@@ -7,12 +15,31 @@ import sys
 import time
 
 
-
 class dfa_miner:
+    """
+    The class for mining minimal DFAs from positive and negative word samples.
+    
+    This class handles reading sample data, constructing DFAs (both regular and
+    three-valued), and minimizing them using SAT solvers. It supports various input
+    formats and can verify the resulting DFA against the input samples.
+    
+    Attributes:
+        OUTPUT_FORMAT (list): Supported output formats ('dot', 'textual').
+        OUTPUT_FORMAT_DEFAULT (str): Default output format ('textual').
+        positive_samples (list): List of accepted word samples.
+        negative_samples (list): List of rejected word samples.
+        num_samples (int): Total number of samples.
+        num_letters (int): Size of the alphabet.
+        has_emptysample (bool): Whether the empty word is a sample.
+        accept_empty (bool): Whether the empty word should be accepted.
+        alphabet (list/range): The alphabet symbols.
+        args (argparse.Namespace): Parsed command-line arguments.
+    """
     OUTPUT_FORMAT = ['dot', 'textual']
     OUTPUT_FORMAT_DEFAULT = 'textual'
 
     def __init__(self):
+        """Initialize a DFA miner instance with empty samples and default settings."""
         self.positive_samples = []
         self.negative_samples = []
         self.num_samples = 0
@@ -21,12 +48,18 @@ class dfa_miner:
         self.accept_empty = False
         self.args = None
 
-    # need to check whether the DFA accepts odd word
-    # or reject some even word
-    # a word is even iff all the cycles in it are even
-    # similarly a word is odd iff all the cycles are odd
-    # so there are some word that is neither even nor odd
     def verify_conjecture_dfa(self, dfa):
+        """Verify that the inferred DFA correctly classifies all input samples.
+        
+        Tests the DFA against all positive and negative samples to ensure correctness.
+        Exits with error code -1 if any misclassification is found.
+        
+        Args:
+            dfa: The DFA to verify.
+            
+        Raises:
+            SystemExit: If the DFA misclassifies any sample.
+        """
         # we verify by enumerating all possible words
         init = None
         for i in dfa.init_states:
@@ -51,14 +84,38 @@ class dfa_miner:
         print("DFA verification passed")
 
     def get_word(self, line_brk):
+        """Parse a word from a line in ABBALINGO format.
+        
+        Args:
+            line_brk (list): A line split into tokens from ABBALINGO format.
+                           Format: [mq, num, letter1, letter2, ...]
+                           where mq is membership query (1=accept, 0=reject)
+                           and num is the word length.
+            
+        Returns:
+            tuple: A tuple (mq, word) where mq indicates acceptance and word is
+                   a list of integer-encoded letters.
+        """
         # print("break lines: ", list(line_brk), " #", len(line_brk))
         mq = int(line_brk[0])
         num = int(line_brk[1])
         w = [int(i) for i in line_brk[2:(2+ num)]]
         return (mq, w)
 
-    # read the competition files
     def read_samples(self, file_name):
+        """Read samples from a file in JSON, Python, or ABBALINGO format.
+        
+        Automatically detects the file format based on file extension:
+        - .json: JSON format with 'alphabet', 'accepting', 'rejecting' fields
+        - .py: Python format with 'positive_samples' and 'negative_samples' lists
+        - other: ABBALINGO format
+        
+        Args:
+            file_name (str): Path to the sample file.
+            
+        Raises:
+            FileNotFoundError: If the specified file does not exist.
+        """
         import os
         if not os.path.exists(file_name):
             raise FileNotFoundError(f"File not found: {file_name}")
@@ -72,6 +129,18 @@ class dfa_miner:
                 self.read_samples_abbalingo(file_name)
     
     def read_samples_json(self, file_name):
+        """Read samples from a JSON file.
+        
+        Expected JSON format:
+        {
+            "alphabet": [...],
+            "accepting": [[word1], [word2], ...],
+            "rejecting": [[word1], [word2], ...]
+        }
+        
+        Args:
+            file_name (str): Path to the JSON sample file.
+        """
         with open(file_name, "r") as f:
             import json
             samples = json.load(f)
@@ -83,7 +152,21 @@ class dfa_miner:
         # convert the input data to the internal format
         self.convert_input(alphabet, pos_samples, neg_samples)
 
-    def read_samples_py(self, file_name):    
+    def read_samples_py(self, file_name):
+        """Read samples from a Python file.
+        
+        Expected Python file format:
+        positive_samples = [[word1], [word2], ...]
+        negative_samples = [[word1], [word2], ...]
+        
+        The alphabet is automatically inferred from the samples.
+        
+        Args:
+            file_name (str): Path to the Python sample file.
+            
+        Raises:
+            ValueError: If the Python file cannot be executed.
+        """
         # read the file content
         with open(file_name, 'r') as f:
             python_content = f.read()
@@ -111,6 +194,16 @@ class dfa_miner:
         self.convert_input(alphabet, pos_samples, neg_samples)
 
     def read_samples_abbalingo(self, file_name):
+        """Read samples from an ABBALINGO format file.
+        
+        ABBALINGO format:
+        Line 1: num_samples num_letters
+        Following lines: mq num letter1 letter2 ... letternum
+        where mq=1 for accepting, mq=0 for rejecting, -1 for comments.
+        
+        Args:
+            file_name (str): Path to the ABBALINGO format file.
+        """
         with open(file_name, "r") as f:
             # read line by line
             line_idx = 0
@@ -142,6 +235,16 @@ class dfa_miner:
         self.negative_samples.sort(key=cmp_to_key(strunion.dfa_builder.LEXICOGRAPHIC_ORDER))
 
     def convert_input(self, alphabet, pos_samples, neg_samples):
+        """Convert input samples to internal representation.
+        
+        Converts alphabet symbols to integer indices and normalizes sample format.
+        Handles the special case of the empty word.
+        
+        Args:
+            alphabet (list): The alphabet symbols.
+            pos_samples (list): Accepting word samples.
+            neg_samples (list): Rejecting word samples.
+        """
         self.alphabet = alphabet
         self.num_letters = len(alphabet)
         self.num_samples = len(pos_samples) + len(neg_samples)
@@ -160,6 +263,15 @@ class dfa_miner:
         self.negative_samples.sort(key=cmp_to_key(strunion.dfa_builder.LEXICOGRAPHIC_ORDER))
 
     def infer_min_dfa(self):
+        """Infer a minimal DFA consistent with the samples.
+        
+        Constructs an intermediate DFA (either three-valued or union of two DFAs)
+        from the samples, then minimizes it using a SAT solver.
+        
+        Returns:
+            A minimized DFA that accepts all positive samples and rejects all
+            negative samples.
+        """
         sdfa = None
         if self.args.sdfa:
             # create the SDFA
@@ -213,6 +325,13 @@ class dfa_miner:
         return result_dfa
 
     def output_result(self, dfa, output_path, output_format):
+        """Write the DFA to a file in the specified format.
+        
+        Args:
+            dfa: The DFA to output.
+            output_path (str): Path to the output file.
+            output_format (str): Output format ('textual' or 'dot').
+        """
         if output_path.split('.')[-1] == 'dot' and output_format != 'dot':
             print ("Warning: inconsistent DOT output file format. File extension: .dot; actual content: textual")
         with open(output_path, "w") as file:
@@ -224,6 +343,15 @@ class dfa_miner:
 
 # sorted(data, key=cmp_to_key(custom_comparator))
 if __name__ == '__main__':
+    """
+    Main entry point for the DFA Miner tool.
+    
+    Parses command-line arguments and runs the DFA mining process:
+    1. Reads sample data from the specified input file
+    2. Infers a minimal DFA consistent with the samples
+    3. Optionally verifies the DFA
+    4. Outputs the result to the specified file
+    """
     # instantiate the command line options parser
     import argparse
     parser = argparse.ArgumentParser(description='Mining a minimal DFA consistent with samples')

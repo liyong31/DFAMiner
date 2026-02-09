@@ -1,3 +1,4 @@
+import acyclic
 import strunion
 import copy
 from hopcroft import sdfa_poly_minimiser
@@ -6,6 +7,26 @@ import dfaminer
 
 # separated DFA for the positive and negative samples
 class sdfa:
+    """
+    A separating Deterministic Finite Automaton (SDFA) class for representing and manipulating three-valued DFAs.
+    This class provides functionality to:
+    - Create and manage DFA states, transitions, and accepting/rejecting states
+    - Combine multiple DFAs into a single DFA
+    - Split a combined DFA back into separate positive and negative DFAs
+    - Compute reachable and reverse-reachable states
+    - Reduce and minimize DFAs
+    - Load SDFA definitions from files
+    - Generate textual and graphical representations
+    Attributes:
+        num_letters (int): Number of symbols in the alphabet. Default: -1
+        num_states (int): Number of states in the automaton. Default: -1
+        init_states (set): Set of initial states
+        trans (list): List of dictionaries representing state transitions. 
+                      Each dictionary maps letters to destination states.
+        final_states (set): Set of accepting/final states
+        reject_states (set): Set of rejecting states
+        rev_trans (list): Cached reverse transition table for efficiency. Default: None
+    """
     def __init__(self):
         self.num_letters = -1
         self.num_states = -1
@@ -55,6 +76,20 @@ class sdfa:
         self.reject_states.add(state)
         
     def run(self, state, word):
+        """
+        Execute the SDFA on a given word starting from a specified state.
+        
+        Args:
+            state: The initial state from which to start processing the word.
+            word: A sequence of characters to process through the SDFA transitions.
+        
+        Returns:
+            strunion.word_type: One of three possible values:
+                - ACCEPT: If the final state after processing the word is in final_states.
+                - REJECT: If the final state after processing the word is in reject_states.
+                - DONTCARE: If a transition is undefined for a character, or if the final state 
+                           is neither in final_states nor reject_states.
+        """
         curr_state = state
         for c in word:
             next_state = self.trans[curr_state].get(c, None)
@@ -68,6 +103,23 @@ class sdfa:
         else:
             return strunion.word_type.DONTCARE
         
+    """
+    Combine two DFAs (Deterministic Finite Automata) into a single SDFA.
+    This method merges a positive DFA and a negative DFA by creating a new SDFA that contains
+    all states from both automata. States from the negative DFA are offset by the number of states
+    in the positive DFA to avoid conflicts.
+    Args:
+        pos_dfa: The positive DFA to combine.
+        neg_dfa: The negative DFA to combine.
+        num_letters: The number of letters in the alphabet.
+    Returns:
+        sdfa: A new SDFA instance containing:
+            - Combined states from both pos_dfa and neg_dfa
+            - Initial states from both automata
+            - Final states from pos_dfa
+            - Reject states from neg_dfa (marked as final states in the reject set)
+            - Transitions from both automata (neg_dfa transitions offset by pos_dfa state count)
+    """
     @staticmethod    
     def combine(pos_dfa, neg_dfa, num_letters):
         res = sdfa()
@@ -93,6 +145,20 @@ class sdfa:
         return res
     
     def split(self):
+        """
+        Split the current SDFA into two separate DFAs: one for positive cases and one for negative cases.
+        This method creates two new SDFA instances that share the same structure (alphabet size,
+        number of states, initial states, and transition table) as the current instance, but differ
+        in their final/accepting states. The positive DFA uses the original final states, while the
+        negative DFA uses the reject states as its final states.
+        Returns:
+            tuple: A tuple containing two SDFA instances:
+                - pos_dfa (sdfa): A new SDFA with the original final_states as accepting states
+                - neg_dfa (sdfa): A new SDFA with the reject_states as accepting states
+        Note:
+            All attributes including transitions, initial states, and final states are copied,
+            so modifications to the returned DFAs will not affect the original instance.
+        """
         pos_dfa = sdfa()
         neg_dfa = sdfa()
         
@@ -156,6 +222,16 @@ class sdfa:
         return self.__get_reachable_states(inits, self.rev_trans) 
     
     def reduce(self):
+        """
+        Reduce the SDFA by removing unreachable and non-coreachable states.
+        This method computes the intersection of forward reachable states and 
+        backward reachable states to identify useful states. It then constructs 
+        a new SDFA containing only these useful states, with transitions remapped 
+        to the reduced state space.
+        Returns:
+            sdfa: A new SDFA object with unreachable and non-productive states removed,
+                  maintaining the original transition structure for remaining states.
+        """
         reachable_states = self.get_reachable_states() & self.get_rev_rechable_states()
         state_map = { state : index for index, state in enumerate(reachable_states)}
         # print(state_map)
@@ -175,14 +251,29 @@ class sdfa:
         return result
     
     def minimise(self):
+        """
+         Use polynomial minimisation to minimise the SDFA.
+        Returns:
+            sdfa: A new minimized SDFA object.
+        """
         poly_minimiser = sdfa_poly_minimiser(self)
         return poly_minimiser.minimise()
     
     def minimise_acyclic(self):
+        """
+        Use acyclic property to minimise the SDFA.
+        Returns:
+            sdfa: A new minimized SDFA object.
+        """
         acyclic_minimiser = sdfa_acyclic_minimiser(self)
         return acyclic_minimiser.minimise()
         
     def __str__(self):
+        """
+        Generate the textual representation of the SDFA
+        Returns:
+            str: The textual representation of the SDFA.
+        """
         out_str = []
         out_str.append(str(self.num_states) + " " + str(self.num_letters) + "\n")
         for init in self.init_states:
@@ -203,6 +294,9 @@ class sdfa:
         return self.__str__()
 
     def dot(self, alphabet):
+        """
+        Generate the DOT representation of the SDFA for visualization.
+        """
         str_list = []
         str_list.append("digraph {\n")
         # str_list.append("  rankdir=LR;\n")
@@ -237,6 +331,16 @@ class sdfa:
         return "".join(str_list)
 
     def load(self, file_name):
+        """
+        Load the SDFA from a file.
+        The file format is as follows:
+        - The first line contains two integers: number of states and number of letters.
+        - The lines (optional) specify the initial states with the prefix 'i'.
+        - Subsequent lines specify transitions with the prefix 't', final states with 'a',
+          and reject states with 'r'.
+        Args:
+            file_name (str): The name of the file to load the SDFA from.
+        """
         bufsize = 65536
         num_line = 0
         left = set()

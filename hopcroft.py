@@ -1,6 +1,11 @@
 import sdfa as SDFA
 
 class sdfa_poly_minimiser:
+    """
+    Implements Hopcroft's algorithm for minimizing a SDFA.
+    References:
+    - https://en.wikipedia.org/wiki/DFA_minimization
+    """
     
     def __init__(self, sdfa):
         self.sdfa = sdfa.reduce()

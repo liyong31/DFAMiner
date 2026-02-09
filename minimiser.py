@@ -1,3 +1,13 @@
+"""3DFA minimization using SAT solvers.
+
+This module provides SAT-based minimization of three-valued/separating finite automata (SDFA)
+using the CNF (Conjunctive Normal Form) approach. It encodes the minimization problem
+as a SAT problem and uses a SAT solver to find a minimal DFA.
+
+The module supports optional BFS-tree constraints for symmetry breaking and can generate
+safety DFAs for solving parity games.
+"""
+
 # the standard way to import PySAT:
 from pysat.formula import CNF
 from pysat.solvers import Solver
@@ -9,16 +19,36 @@ import sdfa as SDFA
 
 
 class sdfa_minimiser:
-    # now we have trees, it is time to create numbers
-    # 0 <= i < j <= n-1
-    # 1. p_{j, i}: i is the parent of j in the BFS-tree
-    # 2. e_{a,i,j}: i goes to j over letter a
-    # 3. t_{i,j}: there is a transition from i to j
-    # 4. r_{a,i,j}: there is a transition from i to j over a and no smaller transition
+    """SAT-based minimizer for SDFA.
+    
+    The variable encoding uses:
+    - edges[p, a, q]: transition from state p to q over letter a
+    - edges[p, -1, -1]: p is a final/accepting state indicator
+    - nodes[(nr, q)]: sample nr reaches state q
+    - parents[i, j]: i is the parent of j in BFS tree
+    - t_aux[i, j]: there is a transition from i to j
+    - m_aux[i, a, j]: transition i->j over letter a is in BFS tree
+    """
 
 
     def create_variables(self, n, alphabet, nb_states):
-
+        """Create SAT variables for DFA minimization.
+        
+        Creates variable mappings for:
+        - DFA transitions over the alphabet and final states
+        - SDFA state to target state mappings
+        - BFS tree parent-child relationships
+        - Auxiliary variables for tree encoding
+        
+        Args:
+            n (int): Number of states in the target DFA.
+            alphabet (list): List of alphabet symbols.
+            nb_states (int): Number of states in the input SDFA.
+            
+        Returns:
+            tuple: A tuple of 5 dictionaries (nodes, edges, parents, t_aux, m_aux)
+                   mapping variable tuples to their SAT variable IDs.
+        """
         num = 1
         # variables for DFA transitions
         prs = [(i, a, j) for i in range(n) for a in alphabet for j in range(n)]
@@ -76,7 +106,23 @@ class sdfa_minimiser:
 
 
     def create_dfa_cnf(self, nodes, edges, input_sdfa, n, alphabet):
-
+        """Create CNF clauses for DFA consistency constraints.
+        
+        Generates clauses enforcing:
+        - Deterministic transitions (exactly one successor per state-letter pair)
+        - Consistency with input samples (samples must reach appropriate states)
+        - Final/reject state constraints
+        
+        Args:
+            nodes (dict): Variable mapping for SDFA state to target state.
+            edges (dict): Variable mapping for transitions.
+            input_sdfa: The input three-valued DFA with samples.
+            n (int): Number of states in target DFA.
+            alphabet (list): List of alphabet symbols.
+            
+        Returns:
+            list: List of CNF clauses (each clause is a list of literals).
+        """
         clauses = []
         # A. deterministic transition formulas
         # A.1. not d_(p, a, q) or not d_(p, a, q')
@@ -151,7 +197,25 @@ class sdfa_minimiser:
 
 
     def create_BFStree_cnf(self, edges, parents, t_aux, m_aux, n, alphabet, safety):
-        print("adding constraints for BFS tree...")
+        """Create CNF clauses for BFS-tree symmetry breaking constraints.
+        
+        Enforces a BFS-tree structure on the DFA to break symmetries and ensure
+        a canonical form. Constrains parent-child relationships and enforces that
+        only the smallest letter over each edge is used in the tree.
+        
+        Args:
+            edges (dict): Variable mapping for transitions.
+            parents (dict): Variable mapping for BFS tree parents.
+            t_aux (dict): Variable mapping for transition existence.
+            m_aux (dict): Variable mapping for tree edge letters.
+            n (int): Number of states in target DFA.
+            alphabet (list): List of alphabet symbols.
+            safety (bool): Whether safety automaton constraints are used.
+            
+        Returns:
+            list: List of CNF clauses.
+        """
+        print("Adding constraints for BFS tree...")
         clauses = []
         # C. node BFS-tree constraints
         # 1. t_{i,j} <-> there is a transition from i to j
@@ -261,8 +325,26 @@ class sdfa_minimiser:
     # 3. if the maximal number is even, say h, i < n (not sink) implies Tr(i, h) = 0
     # 4. Tr(0, 1) = 1
     def create_DSA_cnf(self, edges, n, alphabet):
-
-        print("adding constraints for safety automaton...")
+        """Create CNF clauses for deterministic safety automaton (DSA) constraints.
+        
+        Enforces DSA structure for solving parity games with a single rejecting sink
+        state. Constrains transitions based on letter parity (odd/even).
+        
+        DSA constraints:
+        1. No odd-letter self-loops for initial state and other non-sink states
+        2. Even letters loop back to state 0 from state 0
+        3. Highest letter (color) resets to state 0
+        4. Non-sink states have specific reachability properties
+        
+        Args:
+            edges (dict): Variable mapping for transitions.
+            n (int): Number of states (last state is the sink).
+            alphabet (list): List of alphabet symbols.
+            
+        Returns:
+            list: List of CNF clauses.
+        """
+        print("Adding constraints for safety automaton...")
         max_letter = max (alphabet)
         clauses = []
         is_max_even = max_letter % 2 == 0 
@@ -326,6 +408,28 @@ class sdfa_minimiser:
 
     def create_cnf(self, nodes, edges, parents, t_aux, m_aux, input_sdfa
                 , n, alphabet, nobfs, safety):
+        """Combine all CNF constraint groups into a single formula.
+        
+        Creates the complete CNF formula by combining:
+        - DFA consistency constraints
+        - BFS-tree constraints (unless nobfs=True)
+        - Safety automaton constraints (if safety=True)
+        
+        Args:
+            nodes (dict): Variable mapping for 3DFA state to target state.
+            edges (dict): Variable mapping for transitions.
+            parents (dict): Variable mapping for BFS tree parents.
+            t_aux (dict): Variable mapping for transition existence.
+            m_aux (dict): Variable mapping for tree edge letters.
+            input_sdfa: The input three-valued DFA.
+            n (int): Number of states in target DFA.
+            alphabet (list): List of alphabet symbols.
+            nobfs (bool): If True, skip BFS-tree constraints.
+            safety (bool): If True, add safety automaton constraints.
+            
+        Returns:
+            list: Combined list of CNF clauses.
+        """
         clauses = self.create_dfa_cnf(nodes, edges, input_sdfa,
                                 n, alphabet)
         if not nobfs:
@@ -342,6 +446,21 @@ class sdfa_minimiser:
 
 
     def construct_dfa_from_model(self, model, edges, n, alphabet):
+        """Construct a DFA from a SAT solver model.
+        
+        Extracts transition information from the SAT solver's model assignment
+        and builds a DFA object with the extracted transitions and final states.
+        
+        Args:
+            model (list): The satisfying assignment from the SAT solver.
+            edges (dict): Variable mapping for transitions.
+            n (int): Number of states in the DFA.
+            alphabet (list): List of alphabet symbols.
+            
+        Returns:
+            SDFA.sdfa: A DFA with n states, derived transitions, and initial
+                      state 0. Final states are marked based on the model.
+        """
         # print("type(model) = " + str(type(model)))
         dfa = SDFA.sdfa()
         dfa.set_num_states(n)
@@ -370,7 +489,23 @@ class sdfa_minimiser:
 
     def solve(self,
             sat, n, alphabet, input_sdfa, nobfs, safety):
-
+        """Attempt to find a DFA with exactly n states consistent with input.
+        
+        Creates variables and constraints, then uses the specified SAT solver
+        to search for a DFA of size n that is consistent with the input samples.
+        
+        Args:
+            sat (str): Name of the SAT solver to use (e.g., 'cadical153').
+            n (int): Target number of states for the DFA.
+            alphabet (list): List of alphabet symbols.
+            input_sdfa: The input three-valued DFA.
+            nobfs (bool): If True, skip BFS-tree constraints.
+            safety (bool): If True, add safety automaton constraints.
+            
+        Returns:
+            tuple: (is_sat, dfa) where is_sat is True if a DFA was found
+                   and dfa is the resulting DFA object (or None if not found).
+        """
         nodes, edges, parents, t_aux, m_aux = self.create_variables(n, alphabet, input_sdfa.num_states)
         # solvers, Glucose3(), Cadical103(), Cadical153(), Gluecard4(), Glucose42()
         # g = Cadical153() #Lingeling() #Glucose42()
@@ -403,7 +538,23 @@ class sdfa_minimiser:
 
     def minimise(self,
             input_sdfa, sat, lbound, ubound, nobfs, safety):
-
+        """Find a minimal DFA consistent with the input SDFA within given bounds.
+        
+        Iteratively searches for DFAs of increasing size from lbound to ubound
+        until a satisfiable one is found.
+        
+        Args:
+            input_sdfa: The input three valued DFA.
+            sat (str): Name of the SAT solver to use.
+            lbound (int): Lower bound on the number of states.
+            ubound (int): Upper bound on the number of states.
+            nobfs (bool): If True, skip BFS-tree constraints.
+            safety (bool): If True, construct a safety automaton.
+            
+        Returns:
+            SDFA.sdfa or None: The minimal DFA found, or None if no DFA
+                               within the bounds is satisfiable.
+        """
         alphabet = list(range(input_sdfa.num_letters))
         n = lbound
         max_bound = min([input_sdfa.num_states, ubound])
@@ -433,6 +584,12 @@ solver_choices = {"cadical103", "cadical153", "cadical195", "gluecard4", "glucos
                   "glucose42", "lingeling", "maplechrono", "mergesat3", "minisat22"}
 
 if __name__ == '__main__':
+    """
+    Main entry point for the SDFA minimiser tool.
+    
+    Parses command-line arguments and minimizes an input SDFA using SAT solving.
+    Outputs the minimal DFA in DOT format.
+    """
     import argparse
 
     parser = argparse.ArgumentParser(

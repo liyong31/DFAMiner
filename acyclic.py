@@ -4,6 +4,10 @@ import hopcroft
 
 # minimiser for acylic sdfa
 class sdfa_acyclic_minimiser:
+    """
+    Implements minimisation for acyclic SDFAs: Use backward traversal to merge equivalent states.
+    This algorithm only works when the input SDFA is acyclic.
+    """
 
     def __init__(self, sdfa):
         self.sdfa = sdfa.reduce()
