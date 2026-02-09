@@ -103,25 +103,26 @@ class sdfa:
         else:
             return strunion.word_type.DONTCARE
         
-    """
-    Combine two DFAs (Deterministic Finite Automata) into a single SDFA.
-    This method merges a positive DFA and a negative DFA by creating a new SDFA that contains
-    all states from both automata. States from the negative DFA are offset by the number of states
-    in the positive DFA to avoid conflicts.
-    Args:
-        pos_dfa: The positive DFA to combine.
-        neg_dfa: The negative DFA to combine.
-        num_letters: The number of letters in the alphabet.
-    Returns:
-        sdfa: A new SDFA instance containing:
-            - Combined states from both pos_dfa and neg_dfa
-            - Initial states from both automata
-            - Final states from pos_dfa
-            - Reject states from neg_dfa (marked as final states in the reject set)
-            - Transitions from both automata (neg_dfa transitions offset by pos_dfa state count)
-    """
+    
     @staticmethod    
     def combine(pos_dfa, neg_dfa, num_letters):
+        """
+        Combine two DFAs (Deterministic Finite Automata) into a single SDFA.
+        This method merges a positive DFA and a negative DFA by creating a new SDFA that contains
+        all states from both automata. States from the negative DFA are offset by the number of states
+        in the positive DFA to avoid conflicts.
+        Args:
+            pos_dfa: The positive DFA to combine.
+            neg_dfa: The negative DFA to combine.
+            num_letters: The number of letters in the alphabet.
+        Returns:
+            sdfa: A new SDFA instance containing:
+                - Combined states from both pos_dfa and neg_dfa
+                - Initial states from both automata
+                - Final states from pos_dfa
+                - Reject states from neg_dfa (marked as final states in the reject set)
+                - Transitions from both automata (neg_dfa transitions offset by pos_dfa state count)
+        """
         res = sdfa()
         res.set_num_letters(num_letters)
         res.set_num_states(pos_dfa.num_states + neg_dfa.num_states)
