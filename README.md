@@ -7,7 +7,7 @@ For details of the algorithm, please read the paper [[1]](#1).
 
 ## Requirements 
 
-* Python 3.10+
+* Python 3.7+
 * [DFA](https://github.com/mvcisback/dfa)
 * [PySAT](https://github.com/pysathq/pysat)
 

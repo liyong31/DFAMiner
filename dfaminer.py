@@ -120,13 +120,13 @@ class dfa_miner:
         if not os.path.exists(file_name):
             raise FileNotFoundError(f"File not found: {file_name}")
         
-        match file_name.split('.')[-1]:
-            case "json":
-                self.read_samples_json(file_name)
-            case "py":
-                self.read_samples_py(file_name)
-            case _:
-                self.read_samples_abbalingo(file_name)
+        extension = file_name.split('.')[-1]
+        if extension == "json":
+            self.read_samples_json(file_name)
+        elif extension == "py":
+            self.read_samples_py(file_name)
+        else:
+            self.read_samples_abbadingo(file_name)
     
     def read_samples_json(self, file_name):
         """Read samples from a JSON file.
@@ -335,11 +335,12 @@ class dfa_miner:
         if output_path.split('.')[-1] == 'dot' and output_format != 'dot':
             print ("Warning: inconsistent DOT output file format. File extension: .dot; actual content: textual")
         with open(output_path, "w") as file:
-            match output_format:
-                case 'textual': 
-                    file.write(dfa.textual())
-                case 'dot':
-                    file.write(dfa.dot(self.alphabet))
+            if output_format == 'textual': 
+                file.write(dfa.textual())
+            elif 'dot':
+                file.write(dfa.dot(self.alphabet))
+            else:
+                print(f"Output format '{output_format}' not supported")
 
 # sorted(data, key=cmp_to_key(custom_comparator))
 if __name__ == '__main__':
