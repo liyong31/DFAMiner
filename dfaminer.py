@@ -133,10 +133,12 @@ class dfa_miner:
         
         Expected JSON format:
         {
-            "alphabet": [...],
-            "accepting": [[word1], [word2], ...],
-            "rejecting": [[word1], [word2], ...]
+            "alphabet": ["a1", "a2", ...],
+            "accepting": ["word1", "word2", ...],
+            "rejecting": ["word1", "word2", ...]
         }
+        
+        The "alphabet" field can be omitted; "accepting" and "rejecting" must be present.
         
         Args:
             file_name (str): Path to the JSON sample file.
