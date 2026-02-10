@@ -36,22 +36,24 @@ conda deactivate
 For usage, type <b>`python3 dfaminer.py --help`</b>.
 
 ```
-usage: dfaminer.py [-h] --file path --out path [--output-format {dot,textual}] [--intermediate path]
-                   [--solver {glucose4,glucose42,minisat22,cadical103,cadical153,lingeling,maplechrono,gluecard4,cadical195,mergesat3}] [--lower LOWER] [--upper UPPER] [--3dfa] [--nobfs]
+usage: dfaminer.py [-h] --file path --out path [--output-format {dot,textual}]
+                   [--intermediate path]
+                   [--solver {minisat22,glucose4,maplechrono,cadical195,lingeling,mergesat3,glucose42,gluecard4,cadical153,cadical103}]
+                   [--lower LOWER] [--upper UPPER] [--3dfa] [--nobfs]
                    [--safety] [--verify]
 
 Mining a minimal DFA consistent with samples
 
-options:
+optional arguments:
   -h, --help            show this help message and exit
   --file path           path to input sample file
   --out path            path to output DFA
   --output-format {dot,textual}
-                        the format for the output
+                        the format for the output (default: textual)
   --intermediate path   path to output the intermediate 3DFA
-  --solver {glucose4,glucose42,minisat22,cadical103,cadical153,lingeling,maplechrono,gluecard4,cadical195,mergesat3}
-                        choose the SAT solver
-  --lower LOWER         the lower bound for the DFA
+  --solver {minisat22,glucose4,maplechrono,cadical195,lingeling,mergesat3,glucose42,gluecard4,cadical153,cadical103}
+                        choose the SAT solver (default: cadical153)
+  --lower LOWER         the lower bound for the DFA (default: 1)
   --upper UPPER         the upper bound for the DFA
   --3dfa                use three valued DFA for inference
   --nobfs               disable the constraints for BFS tree
