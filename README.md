@@ -82,7 +82,7 @@ An example file is given below:
 ```
 The first line gives the number of samples and the size of the alphabet.
 Each line after that will first specify the membership of the word, the length of the word and the word sequence.
-Here `1` means accept, `0` reject and `-1` don't care.
+For the membership flag, `1` means accept, `0` reject and `-1` don't care.
 
 It also accepts an equivalent JSON file as follows:
 ```
