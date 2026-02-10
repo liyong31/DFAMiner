@@ -89,8 +89,10 @@ It also accepts an equivalent JSON file as follows:
   "accepting": ["000", "001", "100"], 
   "rejecting": ["010", "011", "101", "110", "111"]
 }
+where "accepting" and "rejecting" are mandatory arrays providing the positive and negative samples, respectively, given as strings. 
+ "alphabet", if present, gives the alphabet as a vector; if it is absent, then the alphabet is derived from the symbols occurring in the given samples.
 ```
-or directly the equivalent Python code
+The positive and negative samples can be directly provided as Python variables, by means of the following Python code:
 ```
 positive_samples = [['0', '0', '0'], ['0', '0', '1'], ['1', '0', '0']]
 negative_samples = [['0', '1', '0'], ['0', '1', '1'], ['1', '0', '1'], ['1', '1', '0'], ['1', '1', '1']]

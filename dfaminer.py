@@ -145,9 +145,13 @@ class dfa_miner:
             import json
             samples = json.load(f)
 
-        alphabet = samples['alphabet']
         pos_samples = samples['accepting']
         neg_samples = samples['rejecting']
+        if 'alphabet' in samples:
+            alphabet = samples['alphabet']
+        else:
+            # reconstruct the used alphabet
+            alphabet = sorted(set(letter for all_samples in pos_samples + neg_samples for letter in all_samples))
 
         # convert the input data to the internal format
         self.convert_input(alphabet, pos_samples, neg_samples)
