@@ -3,7 +3,7 @@ DFA Miner module for inferring minimal Deterministic Finite Automata from sample
 
 This module provides functionality to mine DFAs consistent with positive and negative
 samples using SAT-based techniques for minimization. It supports multiple input formats
-(JSON, Python, and ABBALINGO formats) and can output results in textual or DOT format.
+(JSON, Python, and ABBADINGO formats) and can output results in textual or DOT format.
 """
 
 import sdfa as SDFA
@@ -84,10 +84,10 @@ class dfa_miner:
         print("DFA verification passed")
 
     def get_word(self, line_brk):
-        """Parse a word from a line in ABBALINGO format.
+        """Parse a word from a line in ABBADINGO format.
         
         Args:
-            line_brk (list): A line split into tokens from ABBALINGO format.
+            line_brk (list): A line split into tokens from ABBADINGO format.
                            Format: [mq, num, letter1, letter2, ...]
                            where mq is membership query (1=accept, 0=reject)
                            and num is the word length.
@@ -103,12 +103,12 @@ class dfa_miner:
         return (mq, w)
 
     def read_samples(self, file_name):
-        """Read samples from a file in JSON, Python, or ABBALINGO format.
+        """Read samples from a file in JSON, Python, or ABBADINGO format.
         
         Automatically detects the file format based on file extension:
         - .json: JSON format with 'alphabet', 'accepting', 'rejecting' fields
         - .py: Python format with 'positive_samples' and 'negative_samples' lists
-        - other: ABBALINGO format
+        - other: ABBADINGO format
         
         Args:
             file_name (str): Path to the sample file.
@@ -193,16 +193,16 @@ class dfa_miner:
         # convert the input data to the internal format
         self.convert_input(alphabet, pos_samples, neg_samples)
 
-    def read_samples_abbalingo(self, file_name):
-        """Read samples from an ABBALINGO format file.
+    def read_samples_abbadingo(self, file_name):
+        """Read samples from an ABBADINGO format file.
         
-        ABBALINGO format:
+        ABBADINGO format:
         Line 1: num_samples num_letters
         Following lines: mq num letter1 letter2 ... letternum
         where mq=1 for accepting, mq=0 for rejecting, -1 for comments.
         
         Args:
-            file_name (str): Path to the ABBALINGO format file.
+            file_name (str): Path to the ABBADINGO format file.
         """
         with open(file_name, "r") as f:
             # read line by line
