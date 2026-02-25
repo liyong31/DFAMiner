@@ -294,13 +294,12 @@ class sdfa:
     def textual(self): 
         return self.__str__()
 
-    def dot(self):
-        return self.dot(range(self.num_letters))
-    
-    def dot(self, alphabet):
+    def dot(self, alphabet = None):
         """
         Generate the DOT representation of the SDFA for visualization.
         """
+        if alphabet is None:
+            alphabet = range(self.num_letters)
         str_list = []
         str_list.append("digraph {\n")
         # str_list.append("  rankdir=LR;\n")
