@@ -33,7 +33,7 @@ conda deactivate
 
 ## Usage
 
-For usage, type <b>`python3 dfaminer.py --help`</b> while the `dfaminer` environment is active; this will produce the following output:
+For usage, type <b>`python3 dfaminer.py --help`</b> while the `dfaminer` virtual environment is active; this will produce the following output:
 
 ```
 usage: dfaminer.py [-h] --file path --out path [--output-format {dot,textual}]
@@ -148,6 +148,7 @@ To minimise it, just call
 ```
 python3 minimiser.py --f intermediate_3dfa.txt --out minimised.dot
 ```
+within the `dfaminer` virtual environment.
 The input file is expected to be in ABBADINGO format while the output is produced in DOT format.
 
 #### License
