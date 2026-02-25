@@ -24,7 +24,7 @@ conda activate dfaminer
 ```
 * Install the required packages
 ```
-pip install dfa python-sat[aiger,approxmc,cryptosat,pblib]
+pip install -r requirements.txt
 ```
 * To deactivate the environment, just use
 ```
