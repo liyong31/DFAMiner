@@ -144,6 +144,12 @@ The format is quite straight-forward.
 The first line gives the number of states and the size of the alphabet.
 For each line, `i` is followed by an initial state, `a` by a final state, `r` by a reject state, and `t` by a transition (source, letter, destination)
 
+To minimise it, just call
+```
+python3 minimiser.py --f intermediate_3dfa.txt --out minimised.dot
+```
+The input file is expected to be in ABBADINGO format while the output is produced in DOT format.
+
 #### License
 See LICENSE.txt
 
