@@ -321,7 +321,7 @@ class dfa_miner:
         # output intermediate file, if needed
         if args.intermediate:
             print("Output intermediate 3DFA to " + args.intermediate)
-            self.output_result(sdfa, args.intermediate, args.output_format)
+            self.output_result(sdfa, args.intermediate, "textual")
         
         # now minimise
         min = minimiser.sdfa_minimiser()
@@ -371,7 +371,7 @@ if __name__ == '__main__':
                         help='the format for the output (default: %(default)s)')
     parser.add_argument('--intermediate', metavar='path', type=str, required=False,
                         default=None,
-                        help='path to output the intermediate 3DFA')
+                        help='path to output the intermediate 3DFA (always in textual format)')
     parser.add_argument('--solver', type=str.lower, required=False,
                         choices=minimiser.solver_choices, default="cadical153",
                         help='choose the SAT solver (default: %(default)s)')

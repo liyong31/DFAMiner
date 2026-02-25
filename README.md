@@ -33,7 +33,7 @@ conda deactivate
 
 ## Usage
 
-For usage, type <b>`python3 dfaminer.py --help`</b>.
+For usage, type <b>`python3 dfaminer.py --help`</b> while the `dfaminer` environment is active; this will produce the following output:
 
 ```
 usage: dfaminer.py [-h] --file path --out path [--output-format {dot,textual}]
@@ -50,7 +50,8 @@ optional arguments:
   --out path            path to output DFA
   --output-format {dot,textual}
                         the format for the output (default: textual)
-  --intermediate path   path to output the intermediate 3DFA
+  --intermediate path   path to output the intermediate 3DFA (always in
+                        textual format)
   --solver {minisat22,glucose4,maplechrono,cadical195,lingeling,mergesat3,glucose42,gluecard4,cadical153,cadical103}
                         choose the SAT solver (default: cadical153)
   --lower LOWER         the lower bound for the DFA (default: 1)
@@ -60,6 +61,22 @@ optional arguments:
   --safety              construct safety DFA for solving parity games
   --verify              verify resultant DFA
 ```
+For instance, dfaminer.py can be called on the provided samples as 
+```
+python3 dfaminer.py --file sample.txt --out output.txt
+```
+to store in `output.txt` the textual representation of the minimal DFA consistent with the samples given in `sample.txt`.
+Similarly, by means of 
+```
+python3 dfaminer.py --file sample.json --out output.dot --output-format dot
+```
+the same minimal DFA in DOT format is stored in `output.dot`, with the input samples given in JSON format.
+It is also possible to obtain the intermediate representation of the 3DFA, from the samples provided as Python code:
+```
+python3 dfaminer.py --file sample.py --out output.txt --intermediate intermediate_3dfa.txt
+```
+
+see below for a description of the different input file formats.
 
 #### SAT solvers
  
