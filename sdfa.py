@@ -294,6 +294,9 @@ class sdfa:
     def textual(self): 
         return self.__str__()
 
+    def dot(self):
+        return self.dot(range(self.num_letters))
+    
     def dot(self, alphabet):
         """
         Generate the DOT representation of the SDFA for visualization.
