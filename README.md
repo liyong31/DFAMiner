@@ -19,7 +19,7 @@ This can be achieved as follows:
 * Download and install a virtual environment manager; below we refer to [MiniConda](https://www.anaconda.com/docs/getting-started/miniconda/main)
 * Create a virtual environment
 ```
-conda create -n dfaminer python=3.10
+conda create -n dfaminer python=3.7
 conda activate dfaminer
 ```
 * Install the required packages
