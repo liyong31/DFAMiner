@@ -68,7 +68,7 @@ For more SAT solvers, see [PySAT toolkit](https://github.com/pysathq/pysat).
 #### Input format
 
 dfaminer.py accepts a file in [Abbadingo format](https://abbadingo.cs.nuim.ie/).
-An example file is given below:
+An example file is given below, also available as `sample.txt`:
 ```
 8 2
 1 3 0 0 0
@@ -84,7 +84,7 @@ The first line gives the number of samples and the size of the alphabet.
 Each line after that will first specify the membership of the word, the length of the word and the word sequence.
 For the membership flag, `1` means accept, `0` reject and `-1` don't care.
 
-It also accepts an equivalent JSON file as follows:
+It also accepts an equivalent JSON file (available as `sample.json`) as follows:
 ```
 { 
   "alphabet": ["0", "1"], 
@@ -94,7 +94,7 @@ It also accepts an equivalent JSON file as follows:
 where "accepting" and "rejecting" are mandatory arrays providing the positive and negative samples, respectively, given as strings. 
  "alphabet", if present, gives the alphabet as a vector; if it is absent, then the alphabet is derived from the symbols occurring in the given samples.
 ```
-The positive and negative samples can be directly provided as Python variables, by means of the following Python code:
+The positive and negative samples can be directly provided as Python variables, by means of the following Python code (available as `sample.py`):
 ```
 positive_samples = [['0', '0', '0'], ['0', '0', '1'], ['1', '0', '0']]
 negative_samples = [['0', '1', '0'], ['0', '1', '1'], ['1', '0', '1'], ['1', '1', '0'], ['1', '1', '1']]
