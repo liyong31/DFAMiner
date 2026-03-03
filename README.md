@@ -18,16 +18,16 @@ To avoid creating inconsistencies with the Python libraries installed system-wid
 This can be achieved as follows:
 * Download and install a virtual environment manager; below we refer to [MiniConda](https://www.anaconda.com/docs/getting-started/miniconda/main)
 * Create a virtual environment
-```
+```bash
 conda create -n dfaminer python=3.7
 conda activate dfaminer
 ```
 * Install the required packages
-```
+```bash
 pip install -r requirements.txt
 ```
 * To deactivate the environment, just use
-```
+```bash
 conda deactivate
 ```
 
@@ -35,11 +35,11 @@ conda deactivate
 
 DFAMiner can be used also inside a Docker container, by building the corresponding Docker image via the provided `Dockerfile`.
 To build the image, make sure that Docker is correctly installed and configured in the host system, and then run the command
-```
+```bash
 docker build -t dfaminer:latest -f Dockerfile .
 ```
 Once the building procedure completes, the corresponding Docker container can be run via the command
-```
+```bash
 docker run --rm --name dfaminer_container -ti dfaminer:latest 
 ```
 which will start the `dfaminer` image and move inside the `/home/ubuntu/DFAMiner` directory, to be aligned with the usage instructions below.
@@ -97,17 +97,17 @@ optional arguments:
   --verify              verify resultant DFA
 ```
 For instance, dfaminer.py can be called on the provided samples as 
-```
+```bash
 python3 dfaminer.py --file sample.txt --out output.txt
 ```
 to store in `output.txt` the textual representation of the minimal DFA consistent with the samples given in `sample.txt`.
 Similarly, by means of 
-```
+```bash
 python3 dfaminer.py --file sample.json --out output.dot --output-format dot
 ```
 the same minimal DFA in DOT format is stored in `output.dot`, with the input samples given in JSON format.
 It is also possible to obtain the intermediate representation of the 3DFA, from the samples provided as Python code:
-```
+```bash
 python3 dfaminer.py --file sample.py --out output.txt --intermediate intermediate_3dfa.txt
 ```
 
@@ -180,7 +180,7 @@ The first line gives the number of states and the size of the alphabet.
 For each line, `i` is followed by an initial state, `a` by a final state, `r` by a reject state, and `t` by a transition (source, letter, destination)
 
 To minimise it, just call
-```
+```bash
 python3 minimiser.py --f intermediate_3dfa.txt --out minimised.dot
 ```
 within the `dfaminer` virtual environment.
