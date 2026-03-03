@@ -43,6 +43,8 @@ Once the building procedure completes, the corresponding Docker container can be
 docker run --rm --name dfaminer_container -ti dfaminer:latest 
 ```
 which will start the `dfaminer` image and move inside the `/home/ubuntu/DFAMiner` directory, to be aligned with the usage instructions below.
+When exiting the container, it will be automatically removed and all generated files will be lost; 
+omit the `--rm` option to keep the container, or transfer the data from the running container as explained below. 
 
 ### Transferring data from the container to the host
 ￼
