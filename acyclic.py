@@ -20,7 +20,7 @@ class sdfa_acyclic_minimiser:
 
     ## minimise deterministic acyclic automata, so we start from leaf states
     def minimise(self):
-        # Step 1. prepare the DAG/ acyclic structure
+        # Step 1. prepare the DAG/ acyclic structure in a reverse transition map
         pred_map = {}
         worklist = []
         succ_map = {}
@@ -37,7 +37,7 @@ class sdfa_acyclic_minimiser:
             if not succs:
                 worklist.append(state)
 
-        # Step 3. recursively remove successors and add leaf nodes
+        # Step 2. recursively merge successors and add leaf nodes
         while len(worklist) > 0:
             # each state will only be processed once
             curr_state = worklist.pop(0)
@@ -45,7 +45,7 @@ class sdfa_acyclic_minimiser:
             self.state_map[curr_state] = repr_state
             # in case state has no predecessors
             preds = pred_map.get(curr_state, set())
-            # Step 4. remove this state from succ_map
+            # Step 3. remove this state from succ_map
             for pred in preds:
                 succ_set = succ_map.get(pred, None)
                 if succ_set is None:
@@ -66,7 +66,7 @@ class sdfa_acyclic_minimiser:
         # return self.__build_minimised_sdfa()
 
     def __register_new_state(self, curr_state):
-        # 1. get successor information
+        # get successor information
         # invariant: by default, if pred is here, then all its successors
         # must have been processed
         state = SU.dfa_builder.state_t()
