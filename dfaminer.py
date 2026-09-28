@@ -319,9 +319,9 @@ class dfa_miner:
                 func(init)
 
         # output intermediate file, if needed
-        if args.intermediate:
-            print("Output intermediate 3DFA to " + args.intermediate)
-            self.output_result(sdfa, args.intermediate, "textual")
+        if self.args.intermediate:
+            print("Output intermediate 3DFA to " + self.args.intermediate)
+            self.output_result(sdfa, self.args.intermediate, "textual")
         
         # now minimise
         min = minimiser.sdfa_minimiser()
@@ -377,7 +377,7 @@ if __name__ == '__main__':
                         help='choose the SAT solver (default: %(default)s)')
     parser.add_argument('--lower', type=int, required=False,
                         default=1,
-                        help='the lower bound for the DFA (default: %(default)s)')
+                        help='user lower bound; SAT also uses the conflict graph bound (default: %(default)s)')
     parser.add_argument('--upper', type=int, required=False,
                         default=sys.maxsize,
                         help='the upper bound for the DFA')

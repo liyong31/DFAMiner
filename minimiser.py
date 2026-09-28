@@ -16,6 +16,7 @@ import sys
 import time
 
 import sdfa as SDFA
+from conflict_graph import graph_lower_bound
 
 
 class sdfa_minimiser:
@@ -556,7 +557,10 @@ class sdfa_minimiser:
                                within the bounds is satisfiable.
         """
         alphabet = list(range(input_sdfa.num_letters))
-        n = lbound
+        graph_lower = graph_lower_bound(input_sdfa)
+        n = max(lbound, graph_lower)
+        print("Conflict graph lower bound: " + str(graph_lower))
+        print("SAT search starts at: " + str(n))
         max_bound = min([input_sdfa.num_states, ubound])
         # the maximal number of states must not be bigger than
         # the number of states in the input FA
@@ -603,7 +607,7 @@ if __name__ == '__main__':
                         help='choose the SAT solver')
     parser.add_argument('--lower', type=int, required=False,
                         default=1,
-                        help='the lower bound for the DFA')
+                        help='user lower bound; SAT also uses the conflict graph bound')
     parser.add_argument('--upper', type=int, required=False,
                         default=sys.maxsize,
                         help='the upper bound for the DFA')
