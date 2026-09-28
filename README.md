@@ -66,6 +66,18 @@ The `inputs` and `outputs` directories could also be bind mounted to local host 
 
 In case the `inputs` or `outputs` directories are used, adapt the paths in the usage instructions below accordingly.
 
+## Conflict graph lower bound
+
+Before SAT minimization, DFAMiner builds the incompatibility graph of states
+reachable from the intermediate 3DFA's initial states. Two states conflict if
+some common suffix leads to ACCEPT from one and REJECT from the other;
+DONTCARE and missing transitions impose no constraint. Every consistent DFA
+must assign different states to adjacent vertices. The SAT search therefore
+starts at `max(--lower, graph_lower_bound)`, keeping the explicit `--upper`
+limit. Small graphs use a bounded exact DSATUR chromatic search; large graphs
+and interrupted searches use a certified clique bound. A search budget can
+weaken the lower bound but cannot rule out a feasible DFA.
+
 ## Usage
 
 For usage, type <b>`python3 dfaminer.py --help`</b> while the `dfaminer` virtual environment is active, or inside the docker container; this will produce the following output:
