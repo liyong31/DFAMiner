@@ -40,6 +40,13 @@ class ConflictGraphTests(unittest.TestCase):
         self.assertEqual(incompatibility_graph(a), ([0], [0]))
         self.assertEqual(graph_lower_bound(a), 1)
 
+    def test_accept_precedence_for_overlap(self):
+        a = automaton(2, 1, [(0, 0, 1)], (0,), (0, 1))
+        self.assertEqual(a.run(0, ()), word_type.ACCEPT)
+        self.assertEqual(graph_lower_bound(a), 2)
+        a.reject_states = {0}
+        self.assertEqual(graph_lower_bound(a), 1)
+
     def test_exact_odd_cycle_and_budget_fallback(self):
         cycle = [((1 << ((i-1) % 5)) | (1 << ((i+1) % 5))) for i in range(5)]
         self.assertEqual(_clique_bound(cycle, 0), 2)
@@ -68,6 +75,43 @@ class ConflictGraphTests(unittest.TestCase):
         with patch.object(minimizer, 'solve', return_value=(True, result)) as solve:
             minimizer.minimise(a, 'minisat22', 4, 5, True, False)
         solve.assert_not_called()  # input-size cap is unchanged
+
+    def test_independent_exhaustive_completion_bound(self):
+        # Enumerate complete DFAs without using the SAT solver or graph code.
+        def exists_completion(a, target_size):
+            for transitions in itertools.product(range(target_size),
+                                                  repeat=target_size * a.num_letters):
+                for accepting in range(1 << target_size):
+                    pending = [(root, 0) for root in a.init_states]
+                    visited = set()
+                    while pending:
+                        source, target = pending.pop()
+                        if (source, target) in visited:
+                            continue
+                        visited.add((source, target))
+                        if (source in a.final_states and not accepting >> target & 1 or
+                                source in a.reject_states and accepting >> target & 1):
+                            break
+                        pending.extend((child, transitions[target * a.num_letters + letter])
+                                       for letter, child in a.trans[source].items())
+                    else:
+                        return True
+            return False
+
+        rng = random.Random(293)
+        for _ in range(60):
+            a = automaton(3, 2, [], initials=(0,))
+            for state in range(3):
+                label = rng.randrange(3)
+                if label == 1:
+                    a.add_final_state(state)
+                elif label == 2:
+                    a.add_reject_state(state)
+                for letter in range(2):
+                    if rng.randrange(3):
+                        a.add_transition(state, letter, rng.randrange(3))
+            optimum = next(k for k in range(1, 4) if exists_completion(a, k))
+            self.assertLessEqual(graph_lower_bound(a), optimum)
 
     def test_small_random_instances_against_actual_sat_optimum(self):
         rng = random.Random(392)

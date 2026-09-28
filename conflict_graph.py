@@ -16,9 +16,10 @@ def incompatibility_graph(automaton):
     """
     states = sorted(automaton.get_reachable_states())
     size = automaton.num_states
+    reachable = set(states)
     predecessors = [[[] for _ in range(size)] for _ in range(automaton.num_letters)]
-    for source, transitions in enumerate(automaton.trans):
-        for letter, target in transitions.items():
+    for source in states:
+        for letter, target in automaton.trans[source].items():
             predecessors[letter][target].append(source)
 
     seen = set()
@@ -31,11 +32,11 @@ def incompatibility_graph(automaton):
             seen.add((left, right))
             queue.append((left, right))
 
-    # The SAT encoding constrains both labels if a state is marked twice;
-    # such an inconsistent input has no completion. For a valid input these
-    # sets are disjoint (ACCEPT takes precedence in sdfa.run).
-    for accept in automaton.final_states:
-        for reject in automaton.reject_states:
+    # sdfa.run prioritizes ACCEPT when both labels occur on the same state.
+    # The existing SAT encoding separately constrains both labels in that
+    # case, but following run semantics here remains a sound (weaker) bound.
+    for accept in automaton.final_states & reachable:
+        for reject in (automaton.reject_states - automaton.final_states) & reachable:
             add(accept, reject)
 
     while queue:
@@ -48,7 +49,7 @@ def incompatibility_graph(automaton):
     position = {state: index for index, state in enumerate(states)}
     adjacency = [0] * len(states)
     for left, right in seen:
-        if left != right and left in position and right in position:
+        if left != right:
             i, j = position[left], position[right]
             adjacency[i] |= 1 << j
             adjacency[j] |= 1 << i
@@ -97,7 +98,7 @@ def _clique_bound(adjacency, budget):
         nonlocal best, steps
         if count > best:
             best = count
-        if steps >= budget:
+        if steps >= budget or count >= 800:
             return
         steps += 1
         while candidates and count + candidates.bit_count() > best and steps < budget:
