@@ -6,6 +6,9 @@ suffix with opposite constrained results makes two states incompatible.
 
 from collections import deque
 
+# int.bit_count was introduced after the project's minimum Python version.
+_popcount = getattr(int, "bit_count", lambda value: bin(value).count("1"))
+
 
 def incompatibility_graph(automaton):
     """Return (reachable state IDs, adjacency bitsets) for incompatible pairs.
@@ -63,7 +66,7 @@ def _greedy_coloring(adjacency):
         vertex = max((v for v in range(n) if colors[v] < 0),
                      key=lambda v: (len({colors[u] for u in range(n)
                                          if adjacency[v] >> u & 1 and colors[u] >= 0}),
-                                    adjacency[v].bit_count()))
+                                    _popcount(adjacency[v])))
         used = {colors[u] for u in range(n) if adjacency[vertex] >> u & 1 and colors[u] >= 0}
         colors[vertex] = next(c for c in range(n) if c not in used)
     return max(colors, default=-1) + 1
@@ -75,7 +78,7 @@ def _clique_bound(adjacency, budget):
     best = 0
     steps = 0
     # Several greedy orders provide a cheap useful bound on dense graphs.
-    starts = sorted(range(n), key=lambda v: adjacency[v].bit_count(), reverse=True)
+    starts = sorted(range(n), key=lambda v: _popcount(adjacency[v]), reverse=True)
     for start in starts[:64]:
         candidates = adjacency[start]
         count = 1
@@ -87,7 +90,7 @@ def _clique_bound(adjacency, budget):
                 bit = remaining & -remaining
                 remaining ^= bit
                 candidate = bit.bit_length() - 1
-                degree = (adjacency[candidate] & candidates).bit_count()
+                degree = _popcount(adjacency[candidate] & candidates)
                 if degree > score:
                     v, score = candidate, degree
             candidates &= adjacency[v]
@@ -101,7 +104,7 @@ def _clique_bound(adjacency, budget):
         if steps >= budget or count >= 800:
             return
         steps += 1
-        while candidates and count + candidates.bit_count() > best and steps < budget:
+        while candidates and count + _popcount(candidates) > best and steps < budget:
             bit = candidates & -candidates
             v = bit.bit_length() - 1
             candidates ^= bit
@@ -127,7 +130,7 @@ def _not_k_colorable(adjacency, k, budget):
             return True
         vertex = max(uncolored, key=lambda v: (
             len({colors[u] for u in range(n) if adjacency[v] >> u & 1 and colors[u] >= 0}),
-            adjacency[v].bit_count()))
+            _popcount(adjacency[v])))
         forbidden = {colors[u] for u in range(n)
                      if adjacency[vertex] >> u & 1 and colors[u] >= 0}
         for color in range(min(used + 1, k)):
