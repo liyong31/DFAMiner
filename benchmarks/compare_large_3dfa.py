@@ -201,7 +201,19 @@ def execute_suite(args):
         for case in args.cases:
             automaton, info = prepare(case)
             path = Path(directory) / (case + '.txt')
-            path.write_text(automaton.textual())
+            # Write one record per line. The legacy __str__/textual method
+            # concatenates multiple rejecting-state lines without separators.
+            with path.open('w') as handle:
+                handle.write('{} {}\\n'.format(automaton.num_states, automaton.num_letters))
+                for root in sorted(automaton.init_states):
+                    handle.write('i {}\\n'.format(root))
+                for source, transitions in enumerate(automaton.trans):
+                    for a, dst in sorted(transitions.items()):
+                        handle.write('t {} {} {}\\n'.format(source, a, dst))
+                for state in sorted(automaton.final_states):
+                    handle.write('a {}\\n'.format(state))
+                for state in sorted(automaton.reject_states):
+                    handle.write('r {}\\n'.format(state))
             if case.startswith('repo'):
                 optimum = KNOWN_REPO_OPT[case]
                 target_sizes = [optimum - 1, optimum]
