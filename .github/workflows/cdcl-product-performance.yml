@@ -19,6 +19,14 @@ jobs:
         run: timeout 100s python -m unittest discover -s tests -p 'test_cdcl_product.py' -v
       - name: Benchmark hard cases
         run: timeout 420s python -u benchmarks/compare_cdcl_hard.py --cases mod3x7 mod4x8 priority3x6 priority3x7 random5x8x17 --ks 2 3 4 --repeats 2 --output hard_results.json > hard_log.txt 2>&1 || { tail -n 80 hard_log.txt; exit 1; }
+      - name: Theory scan frequency and lookahead sweep
+        run: |
+          for frequency in 1 4 16 64; do
+            for lookahead in 0 32; do
+              echo "CONFIG frequency=$frequency lookahead=$lookahead"
+              timeout 90s python -u benchmarks/compare_cdcl_hard.py --cases priority3x7 --ks 4 --repeats 5 --modes cdcl --frequency $frequency --lookahead $lookahead --output tuning_${frequency}_${lookahead}.json | tail -n 2
+            done
+          done
       - name: Show results
         if: always()
         run: |
