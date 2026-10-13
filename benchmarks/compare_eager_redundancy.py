@@ -16,9 +16,9 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from pysat.solvers import Solver
+from compare_large_3dfa import prepare, KNOWN_REPO_OPT
 from eager_cnf_variants import ReducedEagerMinimiser
 from cegar_minimiser import sdfa_cegar_minimiser
-from compare_large_3dfa import prepare, KNOWN_REPO_OPT
 from sdfa import sdfa
 
 
