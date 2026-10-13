@@ -330,7 +330,8 @@ class dfa_miner:
             max_pairs=self.args.cdcl_max_pairs,
             check_frequency=self.args.cdcl_frequency,
             lookahead_budget=self.args.cdcl_lookahead,
-            suffix_budget=self.args.cdcl_suffix_budget)
+            suffix_budget=self.args.cdcl_suffix_budget,
+            incremental=self.args.cdcl_incremental)
             if getattr(self.args, 'cdcl_product', False) else
             cegar_minimiser.sdfa_cegar_minimiser(
             batch_size=self.args.cegar_batch, seed_per_label=self.args.cegar_seed,
@@ -405,6 +406,8 @@ if __name__ == '__main__':
                         help='construct safety DFA for solving parity games')
     parser.add_argument('--cdcl-product', action='store_true', default=False,
                         help='enable experimental CaDiCaL 1.9.5 product theory propagator')
+    parser.add_argument('--cdcl-incremental', action='store_true', default=False,
+                        help='use trail-indexed incremental product reachability')
     parser.add_argument('--cdcl-max-pairs', type=int, default=12000)
     parser.add_argument('--cdcl-frequency', type=int, default=4)
     parser.add_argument('--cdcl-lookahead', type=int, default=32)
