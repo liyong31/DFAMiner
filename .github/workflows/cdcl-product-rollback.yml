@@ -1,0 +1,43 @@
+name: Incremental CDCL product validation
+on:
+  push:
+    branches:
+      - codex/cdcl-product-rollback
+  workflow_dispatch:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Dependencies
+        run: python -m pip install python-sat dfa
+      - name: Test old and incremental theory
+        run: |
+          python -m unittest discover -s tests -p 'test_cdcl_product.py' -v
+          python -m unittest discover -s tests -p 'test_incremental_product.py' -v
+      - name: Compare native SAT
+        run: |
+          python -u benchmarks/compare_incremental_cdcl.py --k 2 --repeats 5
+          python -u benchmarks/compare_incremental_cdcl.py --k 3 --repeats 5
+      - name: Benchmark priority 3DFA
+        run: |
+          python -u - <<'PY'
+          import sys
+          from pathlib import Path
+          sys.path.insert(0,'benchmarks')
+          from compare_cdcl_hard import generate, solve_at
+          for case,k in [('priority3x6',4),('priority3x7',4),('mod4x8',3)]:
+              m=generate(case)
+              print('CASE',case,k,'states',m.num_states,flush=True)
+              for mode in ['eager','cegar']:
+                  print('MEASURE',mode,solve_at(m,k,mode),flush=True)
+              from cdcl_product import CDCLProductMinimiser
+              for incremental in (False,True):
+                  solver=CDCLProductMinimiser(incremental=incremental,check_frequency=1,verbose=False)
+                  found,dfa=solver.solve('cadical195',k,list(range(m.num_letters)),m,True,False)
+                  print('MEASURE','incremental' if incremental else 'old-cdcl',found,solver.stats[-1],flush=True)
+          PY
