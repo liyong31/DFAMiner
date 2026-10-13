@@ -26,7 +26,7 @@ def run_one(filename, args):
     legacy = sdfa_minimiser().minimise(**kwargs)
     old_time = time.perf_counter() - start
     start = time.perf_counter()
-    c = sdfa_cegar_minimiser(batch_size=args.batch, seed_per_label=args.seed)
+    c = sdfa_cegar_minimiser(batch_size=args.batch, seed_per_label=args.seed, fallback_ratio=args.fallback)
     new = c.minimise(**kwargs)
     cegar_time = time.perf_counter() - start
     for name, result in [('legacy', legacy), ('CEGAR', new)]:
@@ -59,6 +59,8 @@ def main():
     parser.add_argument('--upper', type=int, default=sys.maxsize)
     parser.add_argument('--batch', type=int, default=32)
     parser.add_argument('--seed', type=int, default=4)
+    parser.add_argument('--fallback', type=float, default=0.75,
+                        help='fraction of active edges at which CEGAR becomes eager')
     parser.add_argument('--nobfs', action='store_true')
     parser.add_argument('--safety', action='store_true')
     parser.add_argument('--json-output', default=None)
