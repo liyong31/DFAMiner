@@ -615,6 +615,8 @@ if __name__ == '__main__':
                         help='construct safety DFA for solving parity games')
     parser.add_argument('--cdcl-product', action='store_true', default=False,
                         help='enable CDCL product-theory minimiser (cadical195)')
+    parser.add_argument('--cdcl-incremental', action='store_true', default=False,
+                        help='use trail-indexed incremental product reachability')
     parser.add_argument('--cdcl-max-pairs', type=int, default=12000)
     parser.add_argument('--cdcl-frequency', type=int, default=4)
     parser.add_argument('--cdcl-lookahead', type=int, default=32)
@@ -633,7 +635,8 @@ if __name__ == '__main__':
     if args.cdcl_product:
         from cdcl_product import CDCLProductMinimiser
         minimiser = CDCLProductMinimiser(args.cdcl_max_pairs, args.cdcl_frequency,
-                                         args.cdcl_lookahead, args.cdcl_suffix_budget)
+                                         args.cdcl_lookahead, args.cdcl_suffix_budget,
+                                         incremental=args.cdcl_incremental)
     elif args.cegar:
         from cegar_minimiser import sdfa_cegar_minimiser
         minimiser = sdfa_cegar_minimiser(args.cegar_batch, args.cegar_seed,
