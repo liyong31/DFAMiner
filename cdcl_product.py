@@ -331,12 +331,13 @@ class CDCLProductMinimiser:
     """Exact minimum-DFA synthesis using an IPASIR-UP user propagator."""
 
     def __init__(self, max_pairs=12000, check_frequency=4,
-                 lookahead_budget=32, suffix_budget=1000, verbose=True):
+                 lookahead_budget=32, suffix_budget=1000, verbose=True, incremental=False):
         self.max_pairs = max_pairs
         self.check_frequency = check_frequency
         self.lookahead_budget = lookahead_budget
         self.suffix_budget = suffix_budget
         self.verbose = verbose
+        self.incremental = incremental
         self.stats = []
 
     def solve(self, sat, n, alphabet, input_sdfa, nobfs, safety):
@@ -358,7 +359,12 @@ class CDCLProductMinimiser:
             m_aux = {(p, a, q): pool.id(('small_letter', p, a, q))
                      for p in range(n) for a in alphabet for q in range(n)}
 
-        engine = DFAProductPropagator(input_sdfa, n, edges,
+        if self.incremental:
+            from incremental_product import IncrementalProductPropagator
+            engine_class = IncrementalProductPropagator
+        else:
+            engine_class = DFAProductPropagator
+        engine = engine_class(input_sdfa, n, edges,
                                       max_pairs=self.max_pairs,
                                       check_frequency=self.check_frequency,
                                       lookahead_budget=self.lookahead_budget,

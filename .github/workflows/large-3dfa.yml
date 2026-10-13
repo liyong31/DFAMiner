@@ -1,0 +1,33 @@
+name: Large 3DFA native benchmarks
+on:
+  push:
+    branches:
+      - codex/large-3dfa-benchmark
+  workflow_dispatch:
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Dependencies
+        run: python -m pip install python-sat dfa
+      - name: Run repository examples
+        run: |
+          timeout 240s python -u benchmarks/compare_large_3dfa.py --cases repo7 repo8 repo10 --seconds 8 --only-unsat --output repository_large_results.json > repository_large.log 2>&1
+          tail -n 20 repository_large.log
+      - name: Run synthetic sparse examples
+        run: |
+          timeout 240s python -u benchmarks/compare_large_3dfa.py --cases sparse600 sparse2400 --seconds 8 --only-unsat --output synthetic_large_results.json > synthetic_large.log 2>&1
+          tail -n 20 synthetic_large.log
+      - name: Upload all results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: larger-3dfa-results
+          path: |
+            *_large_results.json
+            *.log
