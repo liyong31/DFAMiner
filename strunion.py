@@ -124,7 +124,11 @@ class dfa_builder:
                     return False
             return True
 
-    def __init__(self):
+    def __init__(self, collect_incompatibility=False):
+        self.incompatibility_collector = None
+        if collect_incompatibility:
+            from incompatibility import PairwiseCollector
+            self.incompatibility_collector = PairwiseCollector()
         self.register = {} #defaultdict(lambda: None)
         self.root = self.state_t()
         self.previous = None
@@ -162,6 +166,8 @@ class dfa_builder:
         if self.root.has_children():
             self.replace_or_register(self.root)
 
+        if self.incompatibility_collector is not None:
+            self.incompatibility_collector.finalise(self, self.root)
         self.register = None
         return self.root
 
@@ -196,6 +202,8 @@ class dfa_builder:
         state = builder.complete()
         init = dfa_builder.convert(state, dfa, state_map)
         dfa.add_initial_state(init)
+        if builder.incompatibility_collector is not None:
+            dfa.incompatibility = builder.incompatibility_collector.export(dfa, builder)
         return dfa
 
     def set_previous(self, current):
@@ -214,6 +222,8 @@ class dfa_builder:
             state.replace_last_child(registered)
         else:
             self.register[child] = child
+            if self.incompatibility_collector is not None:
+                self.incompatibility_collector.register(child)
 
     def add_suffix(self, state, current, from_index, type):
         for char in current[from_index:]:
