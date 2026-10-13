@@ -1,0 +1,32 @@
+name: CDCL product performance study
+on:
+  push:
+    branches:
+      - codex/cdcl-product-perf
+  workflow_dispatch:
+jobs:
+  benchmarks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: python -m pip install 'python-sat' dfa
+      - name: Native product propagator tests
+        run: timeout 100s python -m unittest discover -s tests -p 'test_cdcl_product.py' -v
+      - name: Benchmark hard cases
+        run: timeout 420s python -u benchmarks/compare_cdcl_hard.py --cases mod3x7 mod4x8 priority3x6 priority3x7 random5x8x17 --ks 2 3 4 --repeats 2 --output hard_results.json > hard_log.txt 2>&1 || { tail -n 80 hard_log.txt; exit 1; }
+      - name: Show results
+        if: always()
+        run: |
+          tail -n 50 hard_log.txt || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-hard-cdcl-results
+          path: |
+            hard_results.json
+            hard_log.txt
