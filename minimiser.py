@@ -613,6 +613,12 @@ if __name__ == '__main__':
     parser.add_argument('--safety', action="store_true", required=False,
                         default=False,
                         help='construct safety DFA for solving parity games')
+    parser.add_argument('--cdcl-product', action='store_true', default=False,
+                        help='enable CDCL product-theory minimiser (cadical195)')
+    parser.add_argument('--cdcl-max-pairs', type=int, default=12000)
+    parser.add_argument('--cdcl-frequency', type=int, default=4)
+    parser.add_argument('--cdcl-lookahead', type=int, default=32)
+    parser.add_argument('--cdcl-suffix-budget', type=int, default=1000)
     parser.add_argument('--cegar', action='store_true', default=False,
                         help='use counterexample-guided minimisation instead of eager SAT')
     parser.add_argument('--cegar-batch', type=int, default=32,
@@ -622,7 +628,13 @@ if __name__ == '__main__':
     parser.add_argument('--cegar-fallback', type=float, default=0.75,
                         help='fraction of active input edges before complete encoding; 0 disables')
     args = parser.parse_args()
-    if args.cegar:
+    if args.cdcl_product and args.cegar:
+        parser.error('--cdcl-product and --cegar are mutually exclusive')
+    if args.cdcl_product:
+        from cdcl_product import CDCLProductMinimiser
+        minimiser = CDCLProductMinimiser(args.cdcl_max_pairs, args.cdcl_frequency,
+                                         args.cdcl_lookahead, args.cdcl_suffix_budget)
+    elif args.cegar:
         from cegar_minimiser import sdfa_cegar_minimiser
         minimiser = sdfa_cegar_minimiser(args.cegar_batch, args.cegar_seed,
                                         fallback_ratio=args.cegar_fallback)

@@ -10,6 +10,7 @@ import sdfa as SDFA
 import strunion
 import minimiser
 import cegar_minimiser
+import cdcl_product
 
 from functools import cmp_to_key
 import sys
@@ -325,7 +326,13 @@ class dfa_miner:
             self.output_result(sdfa, args.intermediate, "textual")
         
         # now minimise
-        min = (cegar_minimiser.sdfa_cegar_minimiser(
+        min = (cdcl_product.CDCLProductMinimiser(
+            max_pairs=self.args.cdcl_max_pairs,
+            check_frequency=self.args.cdcl_frequency,
+            lookahead_budget=self.args.cdcl_lookahead,
+            suffix_budget=self.args.cdcl_suffix_budget)
+            if getattr(self.args, 'cdcl_product', False) else
+            cegar_minimiser.sdfa_cegar_minimiser(
             batch_size=self.args.cegar_batch, seed_per_label=self.args.cegar_seed,
             fallback_ratio=self.args.cegar_fallback)
             if getattr(self.args, 'cegar', False) else minimiser.sdfa_minimiser())
@@ -396,6 +403,12 @@ if __name__ == '__main__':
     parser.add_argument('--safety', action="store_true", required=False,
                         default=False,
                         help='construct safety DFA for solving parity games')
+    parser.add_argument('--cdcl-product', action='store_true', default=False,
+                        help='enable experimental CaDiCaL 1.9.5 product theory propagator')
+    parser.add_argument('--cdcl-max-pairs', type=int, default=12000)
+    parser.add_argument('--cdcl-frequency', type=int, default=4)
+    parser.add_argument('--cdcl-lookahead', type=int, default=32)
+    parser.add_argument('--cdcl-suffix-budget', type=int, default=1000)
     parser.add_argument('--cegar', action="store_true", default=False,
                         help='use opt-in counterexample-guided SAT minimisation')
     parser.add_argument('--cegar-batch', type=int, default=32,
@@ -408,6 +421,10 @@ if __name__ == '__main__':
                         default=False,
                         help='verify resultant DFA')
     args = parser.parse_args()
+    if args.cdcl_product and args.cegar:
+        parser.error('--cdcl-product and --cegar are mutually exclusive')
+    if args.cdcl_product and args.solver != 'cadical195':
+        parser.error('--cdcl-product requires --solver cadical195')
     
     # start the execution of dfaminer
     start_time = time.time()
