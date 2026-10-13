@@ -59,3 +59,42 @@ quadratic in input states times target DFA states.
 Research next step: compute a faster strong clique / bound without full
 O(N^2) pair materialisation, e.g. backward conflict propagation from
 labels or selective residual-pair discovery.
+
+## Native eager SAT ablation: impact of additional incompatible pairs
+
+Run: https://github.com/liyong31/DFAMiner/actions/runs/38406132942
+
+All completed runs at k=OPT-1 returned UNSAT. These are individual
+measurements, so confirm on independent runs before a default change.
+
+| 3DFA / target k | Ordered baseline SAT | Clique-only SAT | 100 extra pairs | 1000 extra pairs |
+|---|---:|---:|---:|---:|
+| repo7: 348 / 6 | 1.623 s | 1.316 s | 0.962 s | **0.325 s** |
+| repo8: 392 / 7 | 6.104 s | 11.459 s | 10.380 s | **1.249 s** |
+| repo10: 465 / 8 | >16 s | >16 s | >16 s | >16 s |
+| sparse600: 1554 / 5 | 1.727 s | 1.745 s | 1.831 s | **0.509 s** |
+| sparse2400: 3884 / 5 | 3.813 s | 4.466 s | 3.880 s | **1.108 s** |
+
+All baseline SAT results in this table use the ordered eager CNF.
+The comparison's baseline also computes and exports incompatibility
+information, so the table isolates SAT search performance and does not
+include data collection overhead.
+
+End-to-end construction+SAT for repo7 with 1000 selected pairs is
+roughly 0.037+0.015+0.325 = **0.377 seconds**, versus 0.003+0.012+
+1.623 = 1.638 seconds for ordered eager without collection. Similarly
+repo8 is roughly 0.046+0.021+1.249 = 1.316 seconds versus 6.126 seconds.
+
+For sparse2400, collection+SAT with 1000 pairs totals about
+3.55+0.10+1.11 = 4.76 seconds, worse than ordered eager at about
+3.91 seconds including ordinary construction. A full quadratic
+incompatibility matrix is therefore not a good universal default.
+
+Key observation: **clique-only constraints may make SAT slower**,
+whereas 1000 selected pair constraints improve several hard instances
+markedly. Optimise the pair-selection heuristic and compute pairs
+selectively rather than exhaustively for large input 3DFAs.
+
+Collection-time clique bounds are a separate benefit. On repo7
+the size-7 clique proves optimality when a 7-state DFA is found,
+so all smaller UNSAT searches can be skipped altogether.
