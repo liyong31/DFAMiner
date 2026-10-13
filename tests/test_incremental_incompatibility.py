@@ -64,6 +64,20 @@ class CollectedPairTests(unittest.TestCase):
                 samples[word]=1 if r.randrange(2) else -1
             self.check(list(samples.items()))
 
+    def test_empty_word_root_label(self):
+        # Root classification is assigned before canonicalisation.
+        for sign in (-1, 1):
+            builder=dfa_builder(collect_incompatibility=True)
+            builder.add((0,),word_type.ACCEPT)
+            builder.add((1,),word_type.REJECT)
+            builder.root.is_final=(word_type.ACCEPT if sign==1 else word_type.REJECT)
+            machine=dfa_builder.build(builder,2)
+            self.assertTrue(machine.incompatibility.verify())
+            for p in range(machine.num_states):
+                for q in range(machine.num_states):
+                    self.assertEqual(bool(machine.incompatibility.adjacency[p] & (1<<q)),
+                                     independently_incompatible(machine,p,q))
+
     def test_solver_selected_pairs(self):
         for seed in range(9):
             rng=random.Random(900+seed)
