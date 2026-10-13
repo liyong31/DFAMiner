@@ -336,7 +336,13 @@ class dfa_miner:
             cegar_minimiser.sdfa_cegar_minimiser(
             batch_size=self.args.cegar_batch, seed_per_label=self.args.cegar_seed,
             fallback_ratio=self.args.cegar_fallback)
-            if getattr(self.args, 'cegar', False) else minimiser.sdfa_minimiser())
+            if getattr(self.args, 'cegar', False) else
+            __import__('cheap_bound_eager').CheapBoundEagerMinimiser(
+                budget_ms=self.args.cheap_bound_ms,
+                max_suffixes=self.args.cheap_bound_suffixes,
+                max_candidates=self.args.cheap_bound_candidates,
+                max_depth=self.args.cheap_bound_depth)
+            if getattr(self.args, 'cheap_bound', False) else minimiser.sdfa_minimiser())
         result_dfa = min.minimise(input_sdfa=sdfa, sat=self.args.solver
             , lbound=self.args.lower, ubound=self.args.upper, nobfs=self.args.nobfs, safety=self.args.safety)
         
@@ -412,6 +418,12 @@ if __name__ == '__main__':
     parser.add_argument('--cdcl-frequency', type=int, default=4)
     parser.add_argument('--cdcl-lookahead', type=int, default=32)
     parser.add_argument('--cdcl-suffix-budget', type=int, default=1000)
+    parser.add_argument('--cheap-bound', action='store_true', default=False,
+                        help='use inexpensive certified residual lower bound with eager SAT')
+    parser.add_argument('--cheap-bound-ms', type=int, default=25)
+    parser.add_argument('--cheap-bound-suffixes', type=int, default=32)
+    parser.add_argument('--cheap-bound-candidates', type=int, default=256)
+    parser.add_argument('--cheap-bound-depth', type=int, default=8)
     parser.add_argument('--cegar', action="store_true", default=False,
                         help='use opt-in counterexample-guided SAT minimisation')
     parser.add_argument('--cegar-batch', type=int, default=32,
@@ -424,6 +436,8 @@ if __name__ == '__main__':
                         default=False,
                         help='verify resultant DFA')
     args = parser.parse_args()
+    if args.cheap_bound and (args.cegar or args.cdcl_product):
+        parser.error('--cheap-bound requires eager SAT (no CEGAR or CDCL product)')
     if args.cdcl_product and args.cegar:
         parser.error('--cdcl-product and --cegar are mutually exclusive')
     if args.cdcl_product and args.solver != 'cadical195':
