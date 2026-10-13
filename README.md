@@ -195,3 +195,46 @@ See LICENSE.txt
 Daniele Dell’Erba, Yong Li & Sven Schewe (2024). 
 DFAMiner: Mining Minimal Separating DFAs from Labelled Samples. 
 26th International Symposium on Formal Methods (FM 2024), LNCS 14934, 48--66.
+
+## Experimental CEGAR minimiser (opt-in)
+
+The original eager SAT minimiser remains the default. Add `--cegar` to
+`dfaminer.py` or standalone `minimiser.py` to enable incremental,
+counterexample-guided path activation. The new code lives in
+[`cegar_minimiser.py`](cegar_minimiser.py) and does not replace the original
+`sdfa_minimiser` implementation.
+
+```bash
+python dfaminer.py --file sample.txt --out /tmp/cegar.dot --3dfa --cegar --verify
+python minimiser.py --f intermediate_3dfa.txt --out /tmp/cegar.dot --cegar
+```
+
+Tuning: `--cegar-batch N` collects up to N counterexamples per SAT iteration
+(default 32), and `--cegar-seed N` initially activates up to N paths for
+each input label (default 4). The target DFA's SAT solver remains live across
+refinements for a fixed size. After a satisfying SAT model is found, the
+entire input 3DFA is checked by a synchronous-product traversal; a failing
+candidate activates all transitions and labels on counterexample paths.
+
+BFS symmetry breaking and the parity-oriented `--safety` clauses are
+unchanged and can be combined with `--cegar`. The latter restricts the
+target DFA class; it does not establish unrestricted minimality without
+a suitable normal-form argument.
+
+To compare both exact minimisers on the bundled textual 3DFA:
+
+```bash
+python benchmarks/compare_minimisers.py --nobfs intermediate_3dfa.txt
+python benchmarks/compare_minimisers.py --json-output comparison.json intermediate_3dfa.txt
+python -m unittest discover -s tests -p 'test_cegar_minimiser.py'
+```
+
+The benchmark verifies every returned DFA against the *complete* input 3DFA
+and checks the minimum state counts agree, reporting timings, SAT iterations,
+number of refinements, activated edges, and clauses. It accepts textual 3DFA
+files, not raw labelled sample files. For larger examples, first generate the
+3DFA using `--intermediate`.
+
+CEGAR is experimental: fewer generated clauses need not translate into lower
+runtime, particularly when many SAT refinements are required. Use the benchmark
+to evaluate it on your parity-game datasets.

@@ -613,8 +613,18 @@ if __name__ == '__main__':
     parser.add_argument('--safety', action="store_true", required=False,
                         default=False,
                         help='construct safety DFA for solving parity games')
+    parser.add_argument('--cegar', action='store_true', default=False,
+                        help='use counterexample-guided minimisation instead of eager SAT')
+    parser.add_argument('--cegar-batch', type=int, default=32,
+                        help='counterexamples collected per iteration')
+    parser.add_argument('--cegar-seed', type=int, default=4,
+                        help='initial positive/negative sample paths')
     args = parser.parse_args()
-    minimiser = sdfa_minimiser() 
+    if args.cegar:
+        from cegar_minimiser import sdfa_cegar_minimiser
+        minimiser = sdfa_cegar_minimiser(args.cegar_batch, args.cegar_seed)
+    else:
+        minimiser = sdfa_minimiser() 
     sdfa = SDFA.sdfa()
     sdfa.load(args.f)
     print("Launch sdfa minimiser...")

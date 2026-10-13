@@ -9,6 +9,7 @@ samples using SAT-based techniques for minimization. It supports multiple input 
 import sdfa as SDFA
 import strunion
 import minimiser
+import cegar_minimiser
 
 from functools import cmp_to_key
 import sys
@@ -324,7 +325,9 @@ class dfa_miner:
             self.output_result(sdfa, args.intermediate, "textual")
         
         # now minimise
-        min = minimiser.sdfa_minimiser()
+        min = (cegar_minimiser.sdfa_cegar_minimiser(
+            batch_size=self.args.cegar_batch, seed_per_label=self.args.cegar_seed)
+            if getattr(self.args, 'cegar', False) else minimiser.sdfa_minimiser())
         result_dfa = min.minimise(input_sdfa=sdfa, sat=self.args.solver
             , lbound=self.args.lower, ubound=self.args.upper, nobfs=self.args.nobfs, safety=self.args.safety)
         
@@ -390,6 +393,12 @@ if __name__ == '__main__':
     parser.add_argument('--safety', action="store_true", required=False,
                         default=False,
                         help='construct safety DFA for solving parity games')
+    parser.add_argument('--cegar', action="store_true", default=False,
+                        help='use opt-in counterexample-guided SAT minimisation')
+    parser.add_argument('--cegar-batch', type=int, default=32,
+                        help='maximum counterexamples per refinement (default: 32)')
+    parser.add_argument('--cegar-seed', type=int, default=4,
+                        help='initial positive/negative sample paths (default: 4 each)')
     parser.add_argument('--verify', action="store_true", required=False,
                         default=False,
                         help='verify resultant DFA')
