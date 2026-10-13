@@ -288,7 +288,7 @@ class dfa_miner:
             WORD_ORDER = lambda s1, s2: strunion.dfa_builder.LEXICOGRAPHIC_ORDER(s1[0], s2[0])
             # now we sort them in place
             samples.sort(key=cmp_to_key(WORD_ORDER))
-            builder = strunion.dfa_builder()
+            builder = strunion.dfa_builder(collect_incompatibility=getattr(self.args, 'incompatibility', False))
             for sample in samples:
                 builder.add(sample[0], strunion.word_type.ACCEPT 
                             if sample[1] else strunion.word_type.REJECT)
@@ -336,7 +336,10 @@ class dfa_miner:
             cegar_minimiser.sdfa_cegar_minimiser(
             batch_size=self.args.cegar_batch, seed_per_label=self.args.cegar_seed,
             fallback_ratio=self.args.cegar_fallback)
-            if getattr(self.args, 'cegar', False) else minimiser.sdfa_minimiser())
+            if getattr(self.args, 'cegar', False) else
+            __import__('incompatibility_eager').IncompatibilityEagerMinimiser(
+                mode='ordered', pair_budget=self.args.incompat_pairs)
+            if getattr(self.args, 'incompatibility', False) else minimiser.sdfa_minimiser())
         result_dfa = min.minimise(input_sdfa=sdfa, sat=self.args.solver
             , lbound=self.args.lower, ubound=self.args.upper, nobfs=self.args.nobfs, safety=self.args.safety)
         
@@ -395,6 +398,10 @@ if __name__ == '__main__':
     parser.add_argument('--upper', type=int, required=False,
                         default=sys.maxsize,
                         help='the upper bound for the DFA')
+    parser.add_argument('--incompatibility', action='store_true', default=False,
+                        help='collect residual incompatibility and use certified clique lower bound')
+    parser.add_argument('--incompat-pairs', type=int, default=0,
+                        help='additional selected incompatible pairs; default clique only')
     parser.add_argument('--3dfa', action="store_true", required=False,
                         default=False, dest='sdfa',
                         help='use three valued DFA for inference')
@@ -424,6 +431,12 @@ if __name__ == '__main__':
                         default=False,
                         help='verify resultant DFA')
     args = parser.parse_args()
+    if args.incompatibility and not args.sdfa:
+        parser.error('--incompatibility requires --3dfa')
+    if args.incompatibility and (args.cegar or args.cdcl_product):
+        parser.error('--incompatibility currently supports only eager SAT')
+    if args.incompat_pairs < 0:
+        parser.error('--incompat-pairs must be nonnegative')
     if args.cdcl_product and args.cegar:
         parser.error('--cdcl-product and --cegar are mutually exclusive')
     if args.cdcl_product and args.solver != 'cadical195':
