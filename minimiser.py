@@ -619,10 +619,13 @@ if __name__ == '__main__':
                         help='counterexamples collected per iteration')
     parser.add_argument('--cegar-seed', type=int, default=4,
                         help='initial positive/negative sample paths')
+    parser.add_argument('--cegar-fallback', type=float, default=0.75,
+                        help='fraction of active input edges before complete encoding; 0 disables')
     args = parser.parse_args()
     if args.cegar:
         from cegar_minimiser import sdfa_cegar_minimiser
-        minimiser = sdfa_cegar_minimiser(args.cegar_batch, args.cegar_seed)
+        minimiser = sdfa_cegar_minimiser(args.cegar_batch, args.cegar_seed,
+                                        fallback_ratio=args.cegar_fallback)
     else:
         minimiser = sdfa_minimiser() 
     sdfa = SDFA.sdfa()
@@ -630,6 +633,8 @@ if __name__ == '__main__':
     print("Launch sdfa minimiser...")
     dfa = minimiser.minimise(input_sdfa=sdfa, sat=args.solver
          , lbound=args.lower, ubound=args.upper, nobfs=args.nobfs, safety=args.safety)
+    if dfa is None:
+        parser.exit(2, 'No DFA found within the requested bounds.\n')
     print("Output to " + args.out)
     with open(args.out, "w") as file:
         file.write(dfa.dot())
