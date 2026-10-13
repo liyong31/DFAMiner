@@ -11,14 +11,14 @@ from pysat.solvers import Solver
 from cegar_minimiser import sdfa_cegar_minimiser
 
 
-def run(m, use_bound):
+def run(m, use_bound, max_k=6):
     t0=perf_counter()
     bound=CheapIncompatibilityBound(m,budget_ms=25,max_suffixes=64,
                                    max_candidates=256,max_depth=9) if use_bound else None
     if bound: bound.verify()
     starting=bound.lower_bound if bound else 1
     info=[]
-    for k in range(starting,7):
+    for k in range(starting,max_k+1):
         obj=ReducedEagerMinimiser('ordered')
         alpha=list(range(m.num_letters))
         var=obj.create_variables(k,alpha,m.num_states)
@@ -35,8 +35,9 @@ def run(m, use_bound):
 
 for name in ('repo7','sparse2400','sparse4800'):
     m=build_3dfa(*make_sparse(name)) if name=='sparse4800' else prepare(name)[0]
-    baseline=run(m,False)
-    budgeted=run(m,True)
+    kmax=7 if name=='repo7' else 6
+    baseline=run(m,False,kmax)
+    budgeted=run(m,True,kmax)
     assert baseline['sizes'][-1][1] and budgeted['sizes'][-1][1]
     assert baseline['sizes'][-1][0]==budgeted['sizes'][-1][0]
     print('COMPARE',json.dumps({'case':name,'states':m.num_states,
