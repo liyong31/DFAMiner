@@ -238,3 +238,15 @@ files, not raw labelled sample files. For larger examples, first generate the
 CEGAR is experimental: fewer generated clauses need not translate into lower
 runtime, particularly when many SAT refinements are required. Use the benchmark
 to evaluate it on your parity-game datasets.
+
+### CEGAR performance improvements (experimental)
+
+The `cegar` branch uses a bitset-based exact product verifier with packed predecessor arrays. This significantly reduces Python object allocation while retaining explicit counterexample reconstruction, including on cyclic input automata. Product SAT variables are now allocated in compact blocks on first use rather than creating a tuple-keyed `IDPool` entry for every target-state pair. An adaptive fallback (`--cegar-fallback 0.75`, default) loads the remaining input constraints into the *same incremental solver* once that fraction of the input edges has been activated; pass `--cegar-fallback 0` to disable it. The existing eager minimiser remains the default unless `--cegar` is requested.
+
+Experimental validation included 600 differential verifier cases, ten small-model SAT-equivalence examples, and synthetic product-memory tests. For a synthetic 120,000-state input and nine-state target, the observed additional peak verifier memory was approximately 224.7 MB for the previous verifier and 10.1 MB for the compact verifier; elapsed time was 1.115 s versus 0.755 s. These figures are *not* parity-game or native PySAT benchmark measurements. The current environment lacked `python-sat`, so SAT-minimisation comparisons were conducted with a testing-only SciPy MILP substitute; native CaDiCaL benchmarking is still required before claiming solver speedups.
+
+To check verifier correctness:
+
+```bash
+python -m unittest discover -s tests -p 'test_cegar_verifier.py'
+```
