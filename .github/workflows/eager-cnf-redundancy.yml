@@ -17,11 +17,11 @@ jobs:
         run: python -m pip install python-sat dfa
       - name: Benchmark repo 3DFAs
         run: |
-          timeout 420s python -u benchmarks/compare_eager_redundancy.py --cases repo7 repo8 repo10 --timeout 18 --output eager_repo_results.json > eager_repo.log 2>&1
+          timeout 420s python -u benchmarks/compare_eager_redundancy.py --cases repo7 repo8 repo10 --timeout 18 --output eager_repo_results.json > eager_repo.log 2>&1 || { tail -n 80 eager_repo.log; exit 1; }
           tail -n 35 eager_repo.log
       - name: Benchmark large 3DFAs
         run: |
-          timeout 360s python -u benchmarks/compare_eager_redundancy.py --cases sparse600 sparse2400 --timeout 16 --output eager_sparse_results.json > eager_sparse.log 2>&1
+          timeout 360s python -u benchmarks/compare_eager_redundancy.py --cases sparse600 sparse2400 --timeout 16 --output eager_sparse_results.json > eager_sparse.log 2>&1 || { tail -n 80 eager_sparse.log; exit 1; }
           tail -n 35 eager_sparse.log
       - name: Upload results
         if: always()
