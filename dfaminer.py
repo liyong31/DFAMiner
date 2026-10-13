@@ -326,7 +326,8 @@ class dfa_miner:
         
         # now minimise
         min = (cegar_minimiser.sdfa_cegar_minimiser(
-            batch_size=self.args.cegar_batch, seed_per_label=self.args.cegar_seed)
+            batch_size=self.args.cegar_batch, seed_per_label=self.args.cegar_seed,
+            fallback_ratio=self.args.cegar_fallback)
             if getattr(self.args, 'cegar', False) else minimiser.sdfa_minimiser())
         result_dfa = min.minimise(input_sdfa=sdfa, sat=self.args.solver
             , lbound=self.args.lower, ubound=self.args.upper, nobfs=self.args.nobfs, safety=self.args.safety)
@@ -341,6 +342,8 @@ class dfa_miner:
             output_path (str): Path to the output file.
             output_format (str): Output format ('textual' or 'dot').
         """
+        if dfa is None:
+            raise ValueError('No DFA found within the requested bounds')
         if output_path.split('.')[-1] == 'dot' and output_format != 'dot':
             print ("Warning: inconsistent DOT output file format. File extension: .dot; actual content: textual")
         with open(output_path, "w") as file:
@@ -399,6 +402,8 @@ if __name__ == '__main__':
                         help='maximum counterexamples per refinement (default: 32)')
     parser.add_argument('--cegar-seed', type=int, default=4,
                         help='initial positive/negative sample paths (default: 4 each)')
+    parser.add_argument('--cegar-fallback', type=float, default=0.75,
+                        help='complete SAT encoding after this fraction of edges is active; 0 disables')
     parser.add_argument('--verify', action="store_true", required=False,
                         default=False,
                         help='verify resultant DFA')
@@ -412,6 +417,8 @@ if __name__ == '__main__':
     miner.args = args
     result_dfa = miner.infer_min_dfa()
     
+    if result_dfa is None:
+        parser.exit(2, 'No DFA found within the requested bounds.\n')
     if args.verify:
         miner.verify_conjecture_dfa(result_dfa)
         
