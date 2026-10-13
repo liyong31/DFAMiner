@@ -185,7 +185,8 @@ def main():
     parser.add_argument('--seconds',type=int,default=60)
     parser.add_argument('--output',default='clique_end_to_end_results.json')
     args=parser.parse_args()
-    os.environ['SAMPLE_COUNT'] = str(args.sample_count)
+    if not args.child:
+        os.environ['SAMPLE_COUNT'] = str(args.sample_count)
     if args.child:
         run_mode(args.child)
     else:
