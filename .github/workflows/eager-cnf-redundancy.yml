@@ -1,0 +1,35 @@
+name: Eager CNF redundancy experiments
+on:
+  push:
+    branches:
+      - codex/eager-cnf-redundancy
+  workflow_dispatch:
+jobs:
+  benchmarks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install SAT solver
+        run: python -m pip install python-sat dfa
+      - name: Benchmark repo 3DFAs
+        run: |
+          timeout 420s python -u benchmarks/compare_eager_redundancy.py --cases repo7 repo8 repo10 --timeout 18 --output eager_repo_results.json > eager_repo.log 2>&1
+          tail -n 35 eager_repo.log
+      - name: Benchmark large 3DFAs
+        run: |
+          timeout 360s python -u benchmarks/compare_eager_redundancy.py --cases sparse600 sparse2400 --timeout 16 --output eager_sparse_results.json > eager_sparse.log 2>&1
+          tail -n 35 eager_sparse.log
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eager-redundancy-results
+          path: |
+            eager_repo_results.json
+            eager_sparse_results.json
+            eager_repo.log
+            eager_sparse.log
