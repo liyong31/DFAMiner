@@ -292,6 +292,11 @@ class dfa_miner:
             for sample in samples:
                 builder.add(sample[0], strunion.word_type.ACCEPT 
                             if sample[1] else strunion.word_type.REJECT)
+            # Empty-word acceptance affects the root residual and must be
+            # included before the collector finalises incompatibility pairs.
+            if self.has_emptysample and getattr(self.args, 'incompatibility', False):
+                builder.root.is_final = (strunion.word_type.ACCEPT
+                    if self.accept_empty else strunion.word_type.REJECT)
             sdfa = strunion.dfa_builder.build(builder, self.num_letters)
         else:
             # create two regular DFAs
