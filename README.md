@@ -250,3 +250,54 @@ To check verifier correctness:
 ```bash
 python -m unittest discover -s tests -p 'test_cegar_verifier.py'
 ```
+
+
+## Experimental CDCL product propagator
+
+The branch `codex/cdcl-product-propagator` introduces a **third, strictly opt-in**
+minimisation mode using the IPASIR-UP user-propagator interface exposed by
+PySAT's `cadical195` solver. Neither the original eager minimiser nor the
+existing `--cegar` mode is replaced.
+
+```bash
+python dfaminer.py --file sample.txt --3dfa --out result.txt \
+    --solver cadical195 --cdcl-product --verify
+
+python minimiser.py --f intermediate_3dfa.txt --out /tmp/result.dot \
+    --solver cadical195 --cdcl-product
+```
+
+The new solver observes only target-DFA transition and finality variables.
+During CDCL it traces input-automaton paths whose target transitions have
+already been selected and derives **reason clauses** for forced final labels,
+contradictory classifications, and transitions forbidden by distinguishing
+input suffixes. The theory state tracks solver levels and discards stale
+assignments on backtracking. Partial product exploration and incompatibility
+lookahead are bounded; every *complete* SAT model is independently checked
+against the entire input 3DFA, so this optimisation does not weaken the
+consistency requirement. Shared suffixes do not require a one-to-one
+input-state mapping.
+
+Tuning: `--cdcl-max-pairs` (default 12000, zero is unlimited),
+`--cdcl-frequency` (default 4 selected transitions per theory scan),
+`--cdcl-lookahead` (default 32 incompatibility probes per theory scan),
+and `--cdcl-suffix-budget` (default 1000 explored residual pairs per
+incompatibility test). The new mode requires `--solver cadical195` and
+cannot be combined with `--cegar`.
+
+To test and benchmark with a working native PySAT/CaDiCaL installation:
+
+```bash
+python -m unittest discover -s tests -p 'test_cdcl_product.py'
+python benchmarks/compare_cdcl_product.py --nobfs intermediate_3dfa.txt
+```
+
+**Validation status:** exhaustive checks of model-rejection clauses and
+partial theory explanations on small automata passed locally, and a
+testing-only SciPy MILP model oracle agreed with an eager SAT formulation
+on the bundled example and eleven random automata. The bundled example
+requires three DFA states. No native IPASIR-UP callbacks or CaDiCaL runtime
+benchmarks could be executed in that environment because `python-sat`
+was unavailable. Consequently, CDCL callback compatibility and performance
+remain experimental and must be verified in an environment with native
+`cadical195` support before merging into the stable `cegar` branch.
