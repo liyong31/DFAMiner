@@ -1,0 +1,28 @@
+name: One-minute clique lower-bound comparison
+on:
+  push:
+    branches:
+      - codex/incremental-incompatibility
+  workflow_dispatch:
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install native CaDiCaL
+        run: python -m pip install python-sat dfa
+      - name: Compare four complete minimum-DFA searches
+        run: |
+          python -u benchmarks/compare_clique_end_to_end.py --seconds 60 --output clique_end_to_end_results.json | tee clique_end_to_end.log
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: clique-end-to-end-60s
+          path: |
+            clique_end_to_end_results.json
+            clique_end_to_end.log
