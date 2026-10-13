@@ -8,10 +8,10 @@ import random
 import unittest
 from pathlib import Path
 
+from sdfa import sdfa
 from cegar_minimiser import sdfa_cegar_minimiser
 from minimiser import sdfa_minimiser
 from eager_cnf_variants import ReducedEagerMinimiser
-from sdfa import sdfa
 
 
 def random_machine(seed):
