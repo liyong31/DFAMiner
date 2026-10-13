@@ -1,0 +1,42 @@
+name: Native CDCL product benchmark
+
+on:
+  push:
+    branches:
+      - codex/native-cdcl-bench-20261013
+  workflow_dispatch:
+
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install SAT dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install 'python-sat' 'dfa'
+          python - <<'PY'
+          import pysat, importlib.metadata
+          print('PySAT', importlib.metadata.version('python-sat'))
+          from pysat.solvers import Solver
+          with Solver(name='cadical195') as s:
+              print('CaDiCaL 1.9.5 available:', s.solve())
+          PY
+      - name: Test theory reasons and native IPASIR-UP
+        run: |
+          timeout 180s python -u -m unittest discover -s tests -p 'test_cdcl_product.py' -v
+      - name: Compare eager, CEGAR and CDCL on bundled example
+        if: always()
+        run: |
+          timeout 180s python -u benchmarks/compare_cdcl_product.py --nobfs intermediate_3dfa.txt --json-output native_results.json
+      - name: Upload benchmark logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-cdcl-benchmark
+          path: native_results.json
+          if-no-files-found: ignore
