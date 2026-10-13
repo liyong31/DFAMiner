@@ -341,7 +341,10 @@ class dfa_miner:
                 budget_ms=self.args.cheap_bound_ms,
                 max_suffixes=self.args.cheap_bound_suffixes,
                 max_candidates=self.args.cheap_bound_candidates,
-                max_depth=self.args.cheap_bound_depth)
+                max_depth=self.args.cheap_bound_depth,
+                pair_budget=self.args.cheap_pairs,
+                pair_budget_ms=self.args.cheap_pairs_ms,
+                pair_policy=self.args.cheap_pairs_policy)
             if getattr(self.args, 'cheap_bound', False) else minimiser.sdfa_minimiser())
         result_dfa = min.minimise(input_sdfa=sdfa, sat=self.args.solver
             , lbound=self.args.lower, ubound=self.args.upper, nobfs=self.args.nobfs, safety=self.args.safety)
@@ -424,6 +427,9 @@ if __name__ == '__main__':
     parser.add_argument('--cheap-bound-suffixes', type=int, default=32)
     parser.add_argument('--cheap-bound-candidates', type=int, default=256)
     parser.add_argument('--cheap-bound-depth', type=int, default=8)
+    parser.add_argument('--cheap-pairs', type=int, default=300)
+    parser.add_argument('--cheap-pairs-ms', type=int, default=15)
+    parser.add_argument('--cheap-pairs-policy', choices=['impact','short','degree','fanin'], default='impact')
     parser.add_argument('--cegar', action="store_true", default=False,
                         help='use opt-in counterexample-guided SAT minimisation')
     parser.add_argument('--cegar-batch', type=int, default=32,
