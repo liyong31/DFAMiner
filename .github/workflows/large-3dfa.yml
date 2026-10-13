@@ -17,11 +17,11 @@ jobs:
         run: python -m pip install python-sat dfa
       - name: Run repository examples
         run: |
-          timeout 650s python -u benchmarks/compare_large_3dfa.py --cases repo7 repo8 repo10 --seconds 35 --only-unsat --output repository_large_results.json > repository_large.log 2>&1
+          timeout 240s python -u benchmarks/compare_large_3dfa.py --cases repo7 repo8 repo10 --seconds 8 --only-unsat --output repository_large_results.json > repository_large.log 2>&1
           tail -n 20 repository_large.log
       - name: Run synthetic sparse examples
         run: |
-          timeout 600s python -u benchmarks/compare_large_3dfa.py --cases sparse600 sparse2400 --seconds 30 --only-unsat --output synthetic_large_results.json > synthetic_large.log 2>&1
+          timeout 240s python -u benchmarks/compare_large_3dfa.py --cases sparse600 sparse2400 --seconds 8 --only-unsat --output synthetic_large_results.json > synthetic_large.log 2>&1
           tail -n 20 synthetic_large.log
       - name: Upload all results
         if: always()
