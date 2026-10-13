@@ -10,6 +10,7 @@ three-valued input automaton shares suffixes.  Product variables x[p, q] are
 therefore not constrained to be one-hot.
 """
 
+from array import array
 from collections import deque
 import time
 
@@ -23,9 +24,13 @@ from minimiser import sdfa_minimiser
 class sdfa_cegar_minimiser:
     """Exact minimum consistent DFA search using lazy product constraints."""
 
-    def __init__(self, batch_size=32, seed_per_label=4, verbose=True):
+    def __init__(self, batch_size=32, seed_per_label=4, verbose=True,
+                 fallback_ratio=0.75):
         if batch_size < 1 or seed_per_label < 0:
             raise ValueError("batch_size must be positive; seed_per_label nonnegative")
+        if not 0 <= fallback_ratio <= 1:
+            raise ValueError("fallback_ratio must be between 0 and 1")
+        self.fallback_ratio = fallback_ratio
         self.batch_size = batch_size
         self.seed_per_label = seed_per_label
         self.verbose = verbose
@@ -37,46 +42,85 @@ class sdfa_cegar_minimiser:
 
     @staticmethod
     def _verify_product(input_sdfa, dfa, limit=32):
-        """Return up to limit (root, word) counterexamples, and visited count.
+        """Exact product check using bitsets and packed predecessor indices.
 
-        Missing input edges and unlabelled states are don't-cares. Explore the
-        synchronous product of the whole input automaton and the candidate.
-        Predecessors are retained so that actual offending words can be
-        reconstructed even when the input 3DFA shares suffix states.
+        Works on cyclic as well as acyclic three-valued DFAs.  Only the
+        newly discovered target states at an input state are expanded, so
+        every reachable product pair is processed at most once.  Missing
+        input transitions and unlabelled states impose no restrictions.
         """
-        pred = {}
+        if limit <= 0:
+            raise ValueError("counterexample limit must be positive")
+        state_count = input_sdfa.num_states
+        k = dfa.num_states
+        letters = input_sdfa.num_letters
+        if k < 1:
+            raise ValueError("candidate DFA must have at least one state")
+        if k <= 64:
+            reached = array('Q', [0]) * state_count
+            pending = array('Q', [0]) * state_count
+        else:
+            reached = [0] * state_count
+            pending = [0] * state_count
+        # A signed 64-bit predecessor encodes (previous_product_id, letter).
+        # Roots have predecessor -1. A packed array saves substantial memory
+        # versus dicts of (input_state, target_state) tuples.
+        parent = array('q', [-1]) * (state_count * k)
+        queued = bytearray(state_count)
         todo = deque()
         for root in sorted(input_sdfa.init_states):
-            pair = (root, 0)
-            if pair not in pred:
-                pred[pair] = None
-                todo.append(pair)
+            if not reached[root] & 1:
+                reached[root] |= 1
+                pending[root] |= 1
+                if not queued[root]:
+                    todo.append(root)
+                    queued[root] = 1
 
         violations = []
         visited = 0
-        while todo:
-            p, q = todo.popleft()
-            visited += 1
-            accepting = q in dfa.final_states
-            bad = ((p in input_sdfa.final_states and not accepting) or
-                   (p in input_sdfa.reject_states and accepting))
-            if bad:
-                word = []
-                at = (p, q)
-                while pred[at] is not None:
-                    previous, letter = pred[at]
-                    word.append(letter)
-                    at = previous
-                word.reverse()
-                violations.append((at[0], tuple(word)))
-                if len(violations) >= limit:
-                    return violations, visited
+        accept = input_sdfa.final_states
+        reject = input_sdfa.reject_states
+        target_accept = dfa.final_states
+        input_trans = input_sdfa.trans
+        target_trans = dfa.trans
 
-            for letter, dst in input_sdfa.trans[p].items():
-                successor = (dst, dfa.trans[q][letter])
-                if successor not in pred:
-                    pred[successor] = ((p, q), letter)
-                    todo.append(successor)
+        while todo:
+            p = todo.popleft()
+            queued[p] = 0
+            mask = pending[p]
+            pending[p] = 0
+            while mask:
+                bit = mask & -mask
+                mask ^= bit
+                q = bit.bit_length() - 1
+                visited += 1
+                accepting = q in target_accept
+                if ((p in accept and not accepting) or
+                        (p in reject and accepting)):
+                    word = []
+                    pair_id = p * k + q
+                    while parent[pair_id] != -1:
+                        encoded = parent[pair_id]
+                        predecessor, letter = divmod(encoded, letters)
+                        word.append(letter)
+                        pair_id = predecessor
+                    word.reverse()
+                    violations.append((pair_id // k, tuple(word)))
+                    if len(violations) >= limit:
+                        return violations, visited
+
+                previous_id = p * k + q
+                for letter, dst in input_trans[p].items():
+                    target = target_trans[q][letter]
+                    new_bit = 1 << target
+                    if reached[dst] & new_bit:
+                        continue
+                    reached[dst] |= new_bit
+                    pending[dst] |= new_bit
+                    parent[dst * k + target] = previous_id * letters + letter
+                    if not queued[dst]:
+                        todo.append(dst)
+                        queued[dst] = 1
 
         return violations, visited
 
@@ -149,8 +193,14 @@ class sdfa_cegar_minimiser:
         for p in range(n):
             edges[p, -1, -1] = pool.id(('final', p))
 
-        active_edges = set()
+        # One bitmask per activated input source, not a tuple per edge.
+        active_edges = {}
+        active_edge_count = 0
         active_labels = set()
+        product_blocks = {}
+        next_product_var = None
+        fallback_used = False
+        total_input_edges = sum(len(t) for t in input_sdfa.trans)
         clauses_added = 0
         sat_seconds = 0.0
         verify_seconds = 0.0
@@ -165,7 +215,16 @@ class sdfa_cegar_minimiser:
             clauses_added += 1
 
         def x(p, q):
-            return pool.id(('product', p, q))
+            nonlocal next_product_var
+            base = product_blocks.get(p)
+            if base is None:
+                # Allocate k consecutive variables only when p is activated.
+                # Direct p*k+q numbering would force the SAT solver to reserve
+                # variables for inactive input states as well.
+                base = next_product_var
+                next_product_var += n
+                product_blocks[p] = base
+            return base + q
 
         def activate_label(solver, p):
             if p in active_labels:
@@ -178,12 +237,15 @@ class sdfa_cegar_minimiser:
                     add_clause(solver, [-x(p, q), -edges[q, -1, -1]])
 
         def activate_path(solver, root, word):
+            nonlocal active_edge_count
             p = root
             activate_label(solver, p)
             for letter in word:
                 dst = input_sdfa.trans[p][letter]
-                if (p, letter) not in active_edges:
-                    active_edges.add((p, letter))
+                bit = 1 << letter
+                if not active_edges.get(p, 0) & bit:
+                    active_edges[p] = active_edges.get(p, 0) | bit
+                    active_edge_count += 1
                     for q in range(n):
                         for r in range(n):
                             add_clause(solver, [-x(p, q),
@@ -191,17 +253,35 @@ class sdfa_cegar_minimiser:
                 p = dst
                 activate_label(solver, p)
 
+        def activate_remaining(solver):
+            """Switch to the original full product encoding inside this solver."""
+            nonlocal fallback_used, active_edge_count
+            fallback_used = True
+            for p in range(input_sdfa.num_states):
+                activate_label(solver, p)
+                for letter, dst in input_sdfa.trans[p].items():
+                    bit = 1 << letter
+                    if active_edges.get(p, 0) & bit:
+                        continue
+                    active_edges[p] = active_edges.get(p, 0) | bit
+                    active_edge_count += 1
+                    for q in range(n):
+                        for r in range(n):
+                            add_clause(solver, [-x(p, q),
+                                                -edges[q, letter, r], x(dst, r)])
+
         def finish(found, dfa):
             self.stats.append({
                 'states': n,
                 'sat': found,
                 'iterations': iterations,
                 'counterexamples': counterexamples,
-                'active_edges': len(active_edges),
+                'active_edges': active_edge_count,
                 'active_labels': len(active_labels),
                 'clauses': clauses_added,
-                'variables': pool.top,
+                'variables': next_product_var - 1,
                 'product_visits': product_visits,
+                'fallback_used': fallback_used,
                 'sat_seconds': round(sat_seconds, 4),
                 'verify_seconds': round(verify_seconds, 4),
                 'seconds': round(time.perf_counter() - start, 4),
@@ -209,7 +289,7 @@ class sdfa_cegar_minimiser:
             self._log("CEGAR k={} {} after {} iterations: {} active edges, "
                       "{} clauses ({:.3f}s)".format(
                           n, 'SAT' if found else 'UNSAT', iterations,
-                          len(active_edges), clauses_added,
+                          active_edge_count, clauses_added,
                           time.perf_counter() - start))
             return found, dfa
 
@@ -240,6 +320,10 @@ class sdfa_cegar_minimiser:
                 for clause in baseline.create_DSA_cnf(edges, n, alphabet):
                     add_clause(solver, clause)
 
+            # All target/BFS/safety variables are allocated before any
+            # product blocks, preventing collisions with the IDPool.
+            next_product_var = pool.top + 1
+
             for root in input_sdfa.init_states:
                 add_clause(solver, [x(root, 0)])
 
@@ -265,13 +349,22 @@ class sdfa_cegar_minimiser:
                     return finish(True, dfa)
 
                 counterexamples += len(witnesses)
-                old_size = (len(active_edges), len(active_labels))
+                old_size = (active_edge_count, len(active_labels))
                 for root, word in witnesses:
                     activate_path(solver, root, word)
-                if old_size == (len(active_edges), len(active_labels)):
+                if old_size == (active_edge_count, len(active_labels)):
                     raise RuntimeError(
                         "A violating path is already fully encoded; "
                         "check the verifier and SAT encoding")
+                # Once most of the input has been activated, adding the rest
+                # may be cheaper than additional SAT/verification rounds.
+                if (self.fallback_ratio > 0 and not fallback_used and
+                        total_input_edges > 0 and
+                        active_edge_count / total_input_edges >= self.fallback_ratio):
+                    self._log("CEGAR: activated {:.1%} of input edges; "
+                              "switching to complete encoding".format(
+                                  active_edge_count / total_input_edges))
+                    activate_remaining(solver)
 
     def minimise(self, input_sdfa, sat, lbound, ubound, nobfs, safety):
         """Find the smallest allowed DFA, as in the original minimiser."""
