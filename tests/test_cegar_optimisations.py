@@ -19,19 +19,12 @@ class LazyCEGARTests(unittest.TestCase):
         self.assertFalse(c._verify_product(a, candidate)[0])
 
     def test_adaptive_full_encoding(self):
+        from pathlib import Path
         a = sdfa()
-        a.set_num_states(4)
-        a.set_num_letters(2)
-        a.add_initial_state(0)
-        a.add_transition(0, 0, 1)
-        a.add_transition(0, 1, 2)
-        a.add_transition(1, 0, 3)
-        a.add_final_state(1)
-        a.add_reject_state(2)
-        a.add_reject_state(3)
+        a.load(str(Path(__file__).resolve().parents[1] / 'intermediate_3dfa.txt'))
         c = sdfa_cegar_minimiser(seed_per_label=1, batch_size=1,
                                  verbose=False, fallback_ratio=0.01)
-        sat, candidate = c.solve('minisat22', 2, [0, 1], a, True, False)
+        sat, candidate = c.solve('minisat22', 3, [0, 1], a, True, False)
         self.assertTrue(sat)
         self.assertTrue(c.stats[-1]['fallback_used'])
         self.assertFalse(c._verify_product(a, candidate)[0])
