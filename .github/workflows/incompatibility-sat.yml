@@ -1,0 +1,26 @@
+name: Incompatibility SAT ablation
+on:
+  push:
+    branches:
+      - codex/incremental-incompatibility
+  workflow_dispatch:
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 11
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Dependencies
+        run: python -m pip install python-sat dfa
+      - name: Compare eager SAT at hard UNSAT sizes
+        run: |
+          for instance in 'repo7 6' 'repo8 7' 'repo10 8' 'sparse600 5' 'sparse2400 5'; do
+            set -- $instance
+            for budget in -1 0 100 1000; do
+              echo "CASE $1 k=$2 budget=$budget"
+              timeout 16s python -u benchmarks/compare_incompatibility_sat.py "$1" "$2" "$budget" || echo "TIMEOUT_OR_ERROR $1 $2 $budget"
+            done
+          done
