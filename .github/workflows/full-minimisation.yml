@@ -1,0 +1,40 @@
+name: Full minimisation from 1 or certified lower bound
+on:
+  push:
+    branches: [codex/hybrid-full-minimisation-benchmark]
+  workflow_dispatch:
+jobs:
+  repository:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - run: python -m pip install python-sat dfa
+      - name: Full optimisation on difficult repository samples
+        run: python -u benchmarks/compare_full_minimisation.py --cases repo7 repo8 repo10 --modes compact-bfs bound-bfs degree-from1 degree-bound short-bound --timeout 60 --output repository_full.json | tee repository_full.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: full-repository
+          path: |
+            repository_full.json
+            repository_full.log
+  synthetic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - run: python -m pip install python-sat dfa
+      - name: Full optimisation on large synthetic examples
+        run: python -u benchmarks/compare_full_minimisation.py --cases sparse2400 sparse4800 sparse9600 --modes compact-bfs bound-bfs degree-bound short-bound --timeout 75 --output synthetic_full.json | tee synthetic_full.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: full-synthetic
+          path: |
+            synthetic_full.json
+            synthetic_full.log
