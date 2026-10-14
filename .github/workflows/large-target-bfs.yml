@@ -1,0 +1,22 @@
+name: Large target BFS symmetry comparison
+on:
+  push:
+    branches: [codex/3dfa-preprocess-symmetry]
+  workflow_dispatch:
+jobs:
+  bfs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - run: python -m pip install python-sat dfa
+      - run: python -u benchmarks/compare_preprocess_symmetry.py --cases sparse4800 sparse9600 --variants base rgs-bfs target-bfs --timeout 50 --output large_target_bfs.json | tee large_target_bfs.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: large-target-bfs
+          path: |
+            large_target_bfs.json
+            large_target_bfs.log
