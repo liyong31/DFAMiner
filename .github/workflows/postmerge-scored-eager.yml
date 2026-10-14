@@ -1,0 +1,32 @@
+name: Post-merge scored eager benchmarks
+on:
+  push:
+    branches: [codex/scored-eager-postmerge-bench]
+  workflow_dispatch:
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - run: python -m pip install python-sat dfa
+      - name: Correctness tests
+        run: |
+          python -m unittest discover -s tests -p 'test_scored_information.py' -v
+          python -m unittest discover -s tests -p 'test_cheap_bound.py' -v
+      - name: Medium 3DFA comparisons
+        run: python -u benchmarks/compare_scored_information.py --cases repo7 repo8 repo10 --modes baseline bound impact300 short300 degree300 --seconds 40 --output medium.json | tee medium.log
+      - name: Large 3DFA comparisons
+        run: python -u benchmarks/compare_scored_information.py --cases sparse2400 sparse4800 --modes baseline bound impact300 short300 degree300 --seconds 40 --output large.json | tee large.log
+      - name: Save measurements
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scored-eager-postmerge
+          path: |
+            medium.json
+            medium.log
+            large.json
+            large.log
