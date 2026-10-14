@@ -1,0 +1,26 @@
+name: Scored eager information validation
+on:
+  push:
+    branches: [codex/scored-eager-information]
+  workflow_dispatch:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 16
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - run: python -m pip install python-sat dfa
+      - run: python -m unittest discover -s tests -p 'test_scored_information.py' -v
+      - name: Native CaDiCaL A/B comparison
+        run: |
+          python -u benchmarks/compare_scored_information.py --seconds 22 --output scored_eager_results.json > scored_results.log 2>&1 || { tail -n 55 scored_results.log; exit 1; }
+          tail -n 60 scored_results.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: scored-eager-results
+          path: |
+            scored_results.log
+            scored_eager_results.json
