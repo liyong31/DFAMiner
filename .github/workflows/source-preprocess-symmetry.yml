@@ -1,0 +1,38 @@
+name: Source preprocessing and RGS symmetry experiments
+on:
+  push:
+    branches: [codex/3dfa-preprocess-symmetry]
+  workflow_dispatch:
+jobs:
+  medium:
+    runs-on: ubuntu-latest
+    timeout-minutes: 11
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - run: python -m pip install python-sat dfa
+      - run: python -u benchmarks/compare_preprocess_symmetry.py --cases repo7 repo8 repo10 sparse2400 --timeout 25 --output medium_preprocess.json | tee medium_preprocess.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: source-preprocess-medium
+          path: |
+            medium_preprocess.json
+            medium_preprocess.log
+  large:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - run: python -m pip install python-sat dfa
+      - run: python -u benchmarks/compare_preprocess_symmetry.py --cases sparse4800 sparse9600 --variants base trim rgs-bfs trim-rgs --timeout 40 --output large_preprocess.json | tee large_preprocess.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: source-preprocess-large
+          path: |
+            large_preprocess.json
+            large_preprocess.log
