@@ -1,0 +1,40 @@
+name: Positive reject clause removal native A/B
+on:
+  push:
+    branches: [codex/label-pair-removal-benchmark]
+  workflow_dispatch:
+jobs:
+  small:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - run: python -m pip install python-sat dfa
+      - name: Medium 3DFA A/B
+        run: python -u benchmarks/compare_label_pair_removal.py --cases repo7 repo8 repo10 sparse2400 --sparse-targets 5 --repeats 1 --timeout 35 --output medium_pairs.json | tee medium_pairs.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: positive-reject-medium
+          path: |
+            medium_pairs.json
+            medium_pairs.log
+  large:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - run: python -m pip install python-sat dfa
+      - name: Large 3DFA A/B
+        run: python -u benchmarks/compare_label_pair_removal.py --cases sparse9600 sparse19200 --sparse-targets 5 6 --repeats 1 --timeout 85 --output large_pairs.json | tee large_pairs.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: positive-reject-large
+          path: |
+            large_pairs.json
+            large_pairs.log
