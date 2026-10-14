@@ -15,10 +15,12 @@ jobs:
       - run: python -m unittest discover -s tests -p 'test_scored_information.py' -v
       - name: Native CaDiCaL A/B comparison
         run: |
-          timeout 600s python -u benchmarks/compare_scored_information.py > scored_results.log 2>&1 || { tail -n 55 scored_results.log; exit 1; }
+          python -u benchmarks/compare_scored_information.py --seconds 22 --output scored_eager_results.json > scored_results.log 2>&1 || { tail -n 55 scored_results.log; exit 1; }
           tail -n 60 scored_results.log
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: scored-eager-results
-          path: scored_results.log
+          path: |
+            scored_results.log
+            scored_eager_results.json
