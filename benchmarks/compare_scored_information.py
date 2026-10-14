@@ -28,7 +28,7 @@ from cegar_minimiser import sdfa_cegar_minimiser
 from pysat.solvers import Solver
 
 TARGETS = {'repo7':6, 'repo8':7, 'repo10':8, 'sparse600':5,
-           'sparse2400':5, 'sparse4800':5}
+           'sparse2400':5, 'sparse4800':5, 'sparse9600':5, 'sparse19200':5}
 MODES = {'baseline':('baseline',0), 'bound':('impact',0),
          'impact100':('impact',100), 'impact300':('impact',300),
          'impact600':('impact',600), 'short300':('short',300),
@@ -36,7 +36,7 @@ MODES = {'baseline':('baseline',0), 'bound':('impact',0),
 
 
 def prepare_machine(case):
-    if case == 'sparse4800':
+    if case in ('sparse4800','sparse9600','sparse19200'):
         return build_3dfa(*make_sparse(case))
     return prepare(case)[0]
 
