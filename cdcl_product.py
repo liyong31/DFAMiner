@@ -49,6 +49,7 @@ class DFAProductPropagator(Propagator):
         self.observed = sorted(set(self.selectors) | self.final_vars)
 
         self.assignment = {}
+        self.chosen = {}  # incrementally maintained true target transitions
         self.fixed = set()
         self.trail = []
         self.trlim = []
@@ -76,6 +77,9 @@ class DFAProductPropagator(Propagator):
         if self.assignment.get(var) == lit:
             return
         self.assignment[var] = lit
+        if lit > 0 and var in self.selectors:
+            p, a, q = self.selectors[var]
+            self.chosen[p, a] = (q, var)
         self.trail.append(lit)
         if fixed:
             self.fixed.add(var)
@@ -97,6 +101,11 @@ class DFAProductPropagator(Propagator):
                 lit = self.trail.pop()
                 if abs(lit) not in self.fixed:
                     self.assignment.pop(abs(lit), None)
+        # Rebuild just once per backtrack, not on every propagation scan.
+        self.chosen = { (p, a): (q, var)
+                        for var, lit in self.assignment.items()
+                        if lit > 0 and var in self.selectors
+                        for p, a, q in [self.selectors[var]] }
         for lit in list(self.reasons):
             if self.assignment.get(abs(lit)) != lit:
                 del self.reasons[lit]
@@ -118,7 +127,7 @@ class DFAProductPropagator(Propagator):
 
     def _selected_transitions(self, assigned=None):
         if assigned is None:
-            assigned = self.assignment
+            return self.chosen
         selected = {}
         for var, lit in assigned.items():
             if lit <= 0 or var not in self.selectors:
@@ -243,12 +252,13 @@ class DFAProductPropagator(Propagator):
                     todo.append(pair)
 
         self.stats['partial_pairs'] += visited
-        conflict, forbidden = self._lookahead(pred)
-        if conflict is not None or forbidden:
-            return conflict, forbidden
+        # Cheap output implications before expensive residual lookahead.
         for lit, clause in candidate.items():
             self.reasons.setdefault(lit, clause)
             return None, [lit]
+        conflict, forbidden = self._lookahead(pred)
+        if conflict is not None or forbidden:
+            return conflict, forbidden
         return None, []
 
     def propagate(self):
